@@ -1,0 +1,2 @@
+logdna
+ibm_cos_sdk

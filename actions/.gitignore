@@ -1,0 +1,6 @@
+virtualenv
+venv
+.vscode
+data
+log.zip
+__pycache__
