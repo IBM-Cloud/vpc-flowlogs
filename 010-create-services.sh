@@ -9,14 +9,16 @@ else
     cloud-object-storage "$COS_SERVICE_PLAN" global || exit 1
 fi
 
-COS_INSTANCE_ID=$(ibmcloud resource service-instance --output JSON $COS_SERVICE_NAME | jq -r .[0].id)
-echo "Cloud Object Storage CRN is $COS_INSTANCE_ID"
+COS_INSTANCE_CRN=$(ibmcloud resource service-instance --output JSON $COS_SERVICE_NAME | jq -r '.[0].id')
+echo "Cloud Object Storage CRN is $COS_INSTANCE_CRN"
 
 if ibmcloud resource service-key $COS_SERVICE_NAME-for-functions > /dev/null 2>&1; then
   echo "Service key already exists"
 else
-  ibmcloud resource service-key-create $COS_SERVICE_NAME-for-functions Writer --instance-id $COS_INSTANCE_ID
+  ibmcloud resource service-key-create $COS_SERVICE_NAME-for-functions Writer --instance-id $COS_INSTANCE_CRN
 fi
+
+ibmcloud cos config crn --crn $COS_INSTANCE_CRN --force
 
 # Create the bucket
 if ibmcloud cos head-bucket --bucket $COS_BUCKET_NAME --region $COS_REGION > /dev/null 2>&1; then
@@ -25,23 +27,26 @@ else
   echo "Creating storage bucket $COS_BUCKET_NAME"
   ibmcloud cos create-bucket \
     --bucket $COS_BUCKET_NAME \
-    --ibm-service-instance-id $COS_INSTANCE_ID \
+    --ibm-service-instance-id $COS_INSTANCE_CRN \
     --region $COS_REGION
 fi
 
-if ibmcloud resource service-instance $VISUAL_RECOGNITION_SERVICE_NAME > /dev/null 2>&1; then
-  echo "Visual Recognition service $VISUAL_RECOGNITION_SERVICE_NAME already exists"
+
+if ibmcloud resource service-instance $LOGDNA_SERVICE_NAME > /dev/null 2>&1; then
+  echo "LogDNA service $LOGDNA_SERVICE_NAME already exists"
 else
-  echo "Creating Visual Recognition Service..."
-  ibmcloud resource service-instance-create $VISUAL_RECOGNITION_SERVICE_NAME \
-    watson-vision-combined "$VISUAL_RECOGNITION_PLAN" $VISUAL_RECOGNITION_REGION || exit 1
+  echo "Creating LogDNA Service..."
+  ibmcloud resource service-instance-create $LOGDNA_SERVICE_NAME \
+    logdna "$LOGDNA_SERVICE_PLAN" $LOGDNA_REGION || exit 1
 fi
+LOGDNA_INSTANCE_CRN=$(ibmcloud resource service-instance --output JSON $LOGDNA_SERVICE_NAME | jq -r .[0].id)
+echo "LogDNA ID is $LOGDNA_INSTANCE_CRN"
 
-VISUAL_RECOGNITION_INSTANCE_ID=$(ibmcloud resource service-instance --output JSON $VISUAL_RECOGNITION_SERVICE_NAME | jq -r .[0].id)
-echo "Visual Recognition CRN is $VISUAL_RECOGNITION_INSTANCE_ID"
-
-if ibmcloud resource service-key $VISUAL_RECOGNITION_SERVICE_NAME-for-functions > /dev/null 2>&1; then
+if ibmcloud resource service-key $LOGDNA_SERVICE_NAME-for-functions > /dev/null 2>&1; then
   echo "Service key already exists"
 else
-  ibmcloud resource service-key-create $VISUAL_RECOGNITION_SERVICE_NAME-for-functions Manager --instance-id $VISUAL_RECOGNITION_INSTANCE_ID
+  ibmcloud resource service-key-create $LOGDNA_SERVICE_NAME-for-functions Manager --instance-id $LOGDNA_INSTANCE_CRN
 fi
+#TODO Valid roles are Manager, Reader, Standard Member. 
+
+

@@ -94,7 +94,7 @@ def rows_from_gz_flowlog_stream(gz, key):
         return rows_from_flowlog_stream(bstream, key)
 
 def main(args):
-    version = 22
+    version = 23
     print(f"version {version}")
     # print(f"version {version} {args}")
     log_args = {"app": "flowlogfuncapp"}

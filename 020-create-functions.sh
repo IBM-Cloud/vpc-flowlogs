@@ -31,20 +31,17 @@ else
     --target-service-instance-id $COS_GUID
 fi
 
-# a simple filter action to ignore unrelated events
-ibmcloud fn action update filter \
-  actions/event-filter.js
-
-# get the key to access to the service
+# get the key to access COS service
 COS_SERVICE_KEY=$(ibmcloud resource service-key $COS_SERVICE_NAME-for-functions --output json)
-COS_API_KEY=$(echo $COS_SERVICE_KEY | jq -r .[0].credentials.apikey)
-COS_INSTANCE_ID=$(echo $COS_SERVICE_KEY | jq -r .[0].credentials.resource_instance_id)
+COS_API_KEY=$(echo $COS_SERVICE_KEY | jq -r '.[0].credentials.apikey')
+COS_INSTANCE_ID=$(echo $COS_SERVICE_KEY | jq -r '.[0].credentials.resource_instance_id')
 
-VISUAL_RECOGNITION_SERVICE_KEY=$(ibmcloud resource service-key $VISUAL_RECOGNITION_SERVICE_NAME-for-functions --output json)
-VISUAL_RECOGNITION_API_KEY=$(echo $VISUAL_RECOGNITION_SERVICE_KEY | jq -r .[0].credentials.apikey)
-VISUAL_RECOGNITION_URL=$(echo $VISUAL_RECOGNITION_SERVICE_KEY | jq -r .[0].credentials.url)
+# get the key to access to LogDNA service
+LOGDNA_SERVICE_KEY=$(ibmcloud resource service-key $LOGDNA_SERVICE_NAME-for-functions --output json)
+LOGDNA_API_KEY=$(echo $LOGDNA_SERVICE_KEY | jq -r '.[0].credentials.apikey')
+LOGDNA_INGESTION_KEY=$(echo $LOGDNA_SERVICE_KEY | jq -r '.[0].credentials.ingestion_key')
 
-# one trigger, action sequence and rule to handle new images
+# one trigger, create-trigger, to handle new flowlog objects in COS
 if ibmcloud fn trigger get create-trigger > /dev/null 2>&1; then
   echo "Trigger on create already exists"
 else
@@ -53,48 +50,15 @@ else
     --param event_types create
 fi
 
-ibmcloud fn action update thumbnail \
-  --param cosApiKey $COS_API_KEY \
-  --param cosInstanceId $COS_INSTANCE_ID \
-  actions/thumbnail.js
+# create a zip of the virtualenv/ and of __main__.py
+( cd actions; ./zipit.sh )
 
-ibmcloud fn action update visualrecognition \
-  --param cosApiKey $COS_API_KEY \
-  --param cosInstanceId $COS_INSTANCE_ID \
-  --param vrUrl $VISUAL_RECOGNITION_URL \
-  --param vrApiKey $VISUAL_RECOGNITION_API_KEY \
-  actions/visualrecognition.js
+# the fn update comand will create the action if it does not exist or update if it does exist
+ibmcloud fn action update log --param cosApiKey $COS_API_KEY --param cosInstanceId $COS_INSTANCE_ID --param logdnaKey $LOGDNA_INGESTION_KEY --param logdnaIngestionEndpoint $LOGDNA_INGESTION_ENDPOINT actions/log.zip --kind python:3.7
 
-ibmcloud fn action update on-create \
-  filter,thumbnail,visualrecognition \
-  --sequence
-
+# connect the trigger to the action via a rule
 if ibmcloud fn rule get create-rule > /dev/null 2>&1; then
   echo "Rule already exists"
 else
-  ibmcloud fn rule create create-rule create-trigger on-create
-fi
-
-# one trigger, action sequence and rule to handle the deletion of images
-if ibmcloud fn trigger get delete-trigger > /dev/null 2>&1; then
-  echo "Trigger on create already exists"
-else
-  ibmcloud fn trigger create delete-trigger --feed /whisk.system/cos/changes \
-    --param bucket $COS_BUCKET_NAME \
-    --param event_types delete
-fi
-
-ibmcloud fn action update delete \
-  --param cosApiKey $COS_API_KEY \
-  --param cosInstanceId $COS_INSTANCE_ID \
-  actions/delete.js
-
-ibmcloud fn action update on-delete \
-  filter,delete \
-  --sequence
-
-if ibmcloud fn rule get delete-rule > /dev/null 2>&1; then
-  echo "Rule already exists"
-else
-  ibmcloud fn rule create delete-rule delete-trigger on-delete
+  ibmcloud fn rule create create-rule create-trigger log
 fi

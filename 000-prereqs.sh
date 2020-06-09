@@ -7,6 +7,9 @@ ibmcloud target -r $REGION
 echo ">>> Targeting resource group $RESOURCE_GROUP_NAME..."
 ibmcloud target -g $RESOURCE_GROUP_NAME
 
+echo ">>> Targeting vpc generation 2..."
+ibmcloud target is --gen 2
+
 echo ">>> Ensuring Cloud Object Storage plugin is installed"
 if ibmcloud cos config list >/dev/null; then
   echo "cloud-object-storage plugin is OK"
@@ -24,6 +27,15 @@ else
   echo "Make sure cloud-functions plugin is properly installed with ibmcloud plugin install cloud-functions."
   exit 1
 fi
+
+echo ">>> Ensuring flowlogs are installed and working"
+if ibmcloud is flow-logs; then
+  echo "flow logs are available"
+else
+  echo "Make sure flow logs are available in your account."
+  exit 1
+fi
+
 
 echo ">>> Is jq (https://stedolan.github.io/jq/) installed?"
 jq -V
