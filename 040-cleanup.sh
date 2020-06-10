@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # vpc and flow logs
-vpc_id=$(terraform output -state=tf/terraform.tfstate vpc_id)
-ibmcloud is flow-log-delete --bucket $COS_BUCKET_NAME --target $vpc_id
+flow_log_id=$(ibmcloud is flow-logs --json | jq -r '.[] | select(.name=="'$PREFIX-flowlog'")|.id')
+ibmcloud is flow-log-delete $flow_log_id -f
 ( cd tf; terraform destroy -auto-approve )
 
 # Cloud Functions
