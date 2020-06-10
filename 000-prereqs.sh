@@ -36,6 +36,8 @@ else
   exit 1
 fi
 
+echo ">>> Ensuring terraform is installed"
+terraform version
 
 echo ">>> Is jq (https://stedolan.github.io/jq/) installed?"
 jq -V
