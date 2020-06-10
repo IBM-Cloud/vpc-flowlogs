@@ -6,7 +6,7 @@ if [ ! -d virtualenv ]; then
   else
     # install virtualenv onto the cloud console
     PATH=~/.local/bin:$PATH
-    sh virtualenv_init.sh
+    ./virtualenv_init.sh
   fi
 fi
 zip -r log.zip virtualenv __main__.py lib
