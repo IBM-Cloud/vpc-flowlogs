@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # vpc and flow logs
 flow_log_id=$(ibmcloud is flow-logs --json | jq -r '.[] | select(.name=="'$PREFIX-flowlog'")|.id')

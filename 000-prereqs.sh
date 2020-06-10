@@ -8,7 +8,7 @@ echo ">>> Targeting resource group $RESOURCE_GROUP_NAME..."
 ibmcloud target -g $RESOURCE_GROUP_NAME
 
 echo ">>> Targeting vpc generation 2..."
-ibmcloud target is --gen 2
+ibmcloud is target --gen 2
 
 echo ">>> Ensuring Cloud Object Storage plugin is installed"
 if ibmcloud cos config list >/dev/null; then

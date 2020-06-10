@@ -2,14 +2,14 @@
 set -e
 
 NAMESPACE=$PREFIX-actions
-if ibmcloud fn namespace get $NAMESPACE > /dev/null 2>&1; then
+if ibmcloud fn property set --namespace $NAMESPACE_INSTANCE_ID; then
   echo "Namespace $NAMESPACE already exists."
 else
   ibmcloud fn namespace create $NAMESPACE
+  ibmcloud fn property set --namespace $NAMESPACE_INSTANCE_ID
 fi
 
 NAMESPACE_INSTANCE_ID=$(ibmcloud fn namespace get $NAMESPACE --properties | grep ID | awk '{print $2}')
-ibmcloud fn property set --namespace $NAMESPACE_INSTANCE_ID
 echo "Namespace Instance ID is $NAMESPACE_INSTANCE_ID"
 
 COS_GUID=$(ibmcloud resource service-instance --output JSON $COS_SERVICE_NAME | jq -r .[0].guid)
