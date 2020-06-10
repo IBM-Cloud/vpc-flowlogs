@@ -1,9 +1,9 @@
 #!/bin/bash
-set -e
 
 # vpc and flow logs
-flow_log_id=$(ibmcloud is flow-logs --json | jq -r '.[] | select(.name=="'$PREFIX-flowlog'")|.id')
-ibmcloud is flow-log-delete $flow_log_id -f
+if flow_log_id=$(ibmcloud is flow-logs --json | jq -e -r '.[] | select(.name=="'$PREFIX-flowlog'")|.id'); then
+  ibmcloud is flow-log-delete $flow_log_id -f
+fi
 ( cd tf; terraform destroy -auto-approve )
 
 # Cloud Functions

@@ -2,11 +2,11 @@
 set -e
 
 NAMESPACE=$PREFIX-actions
-if ibmcloud fn property set --namespace $NAMESPACE_INSTANCE_ID; then
+if ibmcloud fn property set --namespace $NAMESPACE; then
   echo "Namespace $NAMESPACE already exists."
 else
   ibmcloud fn namespace create $NAMESPACE
-  ibmcloud fn property set --namespace $NAMESPACE_INSTANCE_ID
+  ibmcloud fn property set --namespace $NAMESPACE
 fi
 
 NAMESPACE_INSTANCE_ID=$(ibmcloud fn namespace get $NAMESPACE --properties | grep ID | awk '{print $2}')
