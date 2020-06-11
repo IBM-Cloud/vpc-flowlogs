@@ -1,5 +1,5 @@
 #!/bin/bash
-set -ex
+set -e
 pip install virtualenv
 virtualenv virtualenv
 source virtualenv/bin/activate
