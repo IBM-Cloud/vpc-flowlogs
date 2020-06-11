@@ -6,3 +6,5 @@ package-lock.json
 terraform.tfstate*
 .terraform
 .terraform.tfstate.lock.info
+schematics.json
+schematics.tfvars

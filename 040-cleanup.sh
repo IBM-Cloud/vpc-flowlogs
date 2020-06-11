@@ -1,10 +1,17 @@
 #!/bin/bash
+source ./shared.sh
 
 # vpc and flow logs
 if flow_log_id=$(ibmcloud is flow-logs --json | jq -e -r '.[] | select(.name=="'$PREFIX-flowlog'")|.id'); then
   ibmcloud is flow-log-delete $flow_log_id -f
 fi
-( cd tf; terraform destroy -auto-approve )
+
+if workspace_id=$(get_workspace_id); then
+  ibmcloud schematics destroy --id $workspace_id -f
+  poll_for_latest_action_to_finish $workspace_id
+  ibmcloud schematics workspace delete --id $workspace_id -f
+fi
+
 
 # Cloud Functions
 ibmcloud fn rule delete create-rule
