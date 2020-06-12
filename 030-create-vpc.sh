@@ -12,8 +12,8 @@ if workspace_id=$(get_workspace_id); then
   ibmcloud schematics workspace update --id $workspace_id --file schematics.json
   sleep 2
 else
-  ibmcloud schematics workspace new --file schematics.json
-  workspace_id=$(get_workspace_id)
+  echo '>>> creating schematics workspace'
+  workspace_id=$(ibmcloud schematics workspace new --file schematics.json --output json | jq -r '.id')
 fi
 poll_for_latest_action_to_finish $workspace_id
 
@@ -21,7 +21,7 @@ echo basename = "\"$TF_VAR_basename\"" > schematics.tfvars
 echo ssh_key_name = "\"$TF_VAR_ssh_key_name\"" >> schematics.tfvars
 
 echo '>>> terraform apply'
-ibmcloud schematics apply --id $workspace_id --var-file schematics.tfvars -f --output json
+ibmcloud schematics apply --id $workspace_id --var-file schematics.tfvars -f
 poll_for_latest_action_to_finish $workspace_id
 
 echo '>>> get vpc id'

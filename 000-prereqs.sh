@@ -36,13 +36,5 @@ else
   exit 1
 fi
 
-echo ">>> Ensuring terraform is installed"
-if terraform version | grep 'Terraform v0.12.'; then
-  echo expected version of terraform
-else
-  echo FAIL: expecting version v0.12
-  exit 1
-fi
-
 echo ">>> Is jq (https://stedolan.github.io/jq/) installed?"
 jq -V

@@ -4,7 +4,7 @@
 
 function get_workspace_id() {
   # get the workspace id by name
-  ibmcloud schematics workspace list --json | jq -e -r '.workspaces[]|select(.name=="'$TF_VAR_basename'")|.id'
+  ibmcloud schematics workspace list --json | jq -e -r '.workspaces[]|select(.name=="'$TF_VAR_basename'")|.id' 2>/dev/null
 }
 
 function poll_for_latest_action_to_finish() {
