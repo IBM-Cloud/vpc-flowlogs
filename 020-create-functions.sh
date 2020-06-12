@@ -1,8 +1,9 @@
 #!/bin/bash
 set -e
 
+echo '>>> cloud function namespace'
 NAMESPACE=$PREFIX-actions
-if ibmcloud fn property set --namespace $NAMESPACE; then
+if ibmcloud fn property set --namespace $NAMESPACE > /dev/null 2>&1; then
   echo "Namespace $NAMESPACE already exists."
 else
   ibmcloud fn namespace create $NAMESPACE
@@ -15,6 +16,7 @@ echo "Namespace Instance ID is $NAMESPACE_INSTANCE_ID"
 COS_GUID=$(ibmcloud resource service-instance --output JSON $COS_SERVICE_NAME | jq -r .[0].guid)
 echo "COS GUID is $COS_GUID"
 
+echo '>>> iam authorization policy from function namspace to COS'
 EXISTING_POLICIES=$(ibmcloud iam authorization-policies --output JSON)
 if echo "$EXISTING_POLICIES" | \
   jq -e '.[] |
@@ -42,6 +44,7 @@ LOGDNA_API_KEY=$(echo $LOGDNA_SERVICE_KEY | jq -r '.[0].credentials.apikey')
 LOGDNA_INGESTION_KEY=$(echo $LOGDNA_SERVICE_KEY | jq -r '.[0].credentials.ingestion_key')
 
 # one trigger, create-trigger, to handle new flowlog objects in COS
+echo '>>> function trigger from COS'
 if ibmcloud fn trigger get create-trigger > /dev/null 2>&1; then
   echo "Trigger on create already exists"
 else
@@ -51,12 +54,15 @@ else
 fi
 
 # create a zip of the virtualenv/ and of __main__.py
+echo '>>> create zip of python action'
 ( cd actions; ./zipit.sh )
 
 # the fn update comand will create the action if it does not exist or update if it does exist
+echo '>>> update action with python zip'
 ibmcloud fn action update log --param cosApiKey $COS_API_KEY --param cosInstanceId $COS_INSTANCE_ID --param logdnaKey $LOGDNA_INGESTION_KEY --param logdnaIngestionEndpoint $LOGDNA_INGESTION_ENDPOINT actions/log.zip --kind python:3.7
 
 # connect the trigger to the action via a rule
+echo '>>> rule from trigger to action'
 if ibmcloud fn rule get create-rule > /dev/null 2>&1; then
   echo "Rule already exists"
 else

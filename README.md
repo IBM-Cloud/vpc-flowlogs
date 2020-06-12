@@ -1,4 +1,4 @@
-# Use Cloud Functions to automatically analyze images in Cloud Object Storage
+# Analyze VPC Flow Logs using LogDNA
 
 [Flow logs for VPC](https://cloud.ibm.com/vpc-ext/network/flowLogs) store metadata for the network traffic in Virtual Private Clouds, VPC in Cloud Object Storage (COS) buckets.
 
@@ -65,10 +65,10 @@ Or use your own computer and make sure to install:
    ./020-create-functions.sh
    ```
 
-1. From that point you can go into the Cloud Object Storage service instance and upload files from the IBM Cloud console. Or you can run this simple test which uses an image from [Unsplash](https://unsplash.com).
+1. Create a VPC with two instances and a Flow Log collector for the vpc.  The vsi1 is public.  The vsi2 is private and only accesible from vsi1.  For a full explination see TODO BLOG POST
 
    ```sh
-   ./030-test.sh
+   ./030-create-vpc.sh
    ```
 
 ## Cleanup
