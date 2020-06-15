@@ -18,20 +18,22 @@ This project shows how use a trigger function to read a flow log COS object and 
 > - to create service instances,
 > - to create Cloud Functions namespaces (you need to be an Administrator on the Functions service)
 > - to create vpc resources
+> - to create a schematics workspace
 
-1. To run the following scripts use the IBM cloud shell.  It has the pre-requisites already installed.
+1. To run the following scripts you can use the IBM cloud shell.  It has the pre-requisites already installed.
 Or use your own computer and make sure to install:
    * [IBM Cloud CLI](https://cloud.ibm.com/docs/cli?topic=cloud-cli-install-ibmcloud-cli)
    * Cloud Object Storage plugin. Install it with `ibmcloud plugin install cloud-object-storage`.
    * Cloud VPC infrastructure plugin. Install it with `ibmcloud plugin install vpc-infrastructure`.
    * Cloud Functions plugin. Install it with `ibmcloud plugin install cloud-functions`.
-   * [Terraform and the IBM Provider](https://cloud.ibm.com/docs/terraform?topic=terraform-getting-started)
+   * Schematics plugin. Install it with `ibmcloud plugin install cloud-functions`.
    * [jq](https://stedolan.github.io/jq/) command line utility
 
-1. Copy the configuration file and set the values to match your environment. At a minimum, set or review the values for `PREFIX`, `RESOURCE_GROUP_NAME`, `REGION`, `TF_VAR_ssh_key_name` and `TF_VAR_ibmcloud_api_key`
+1. Copy the configuration file and set the values to match your environment. At a minimum, set or review the values for `PREFIX`, `RESOURCE_GROUP_NAME`, `REGION` and `TF_VAR_ssh_key_name`.
 
    ```sh
    cp template.local.env local.env
+   edit local.env
    ```
 
 1. Load the values into the current shell.
@@ -57,15 +59,13 @@ Or use your own computer and make sure to install:
       * a storage bucket
       * a LogDNA service instance and a service key.
 
-   The previously defined `PREFIX` variable is used to define the names of these resources.
-
-1. Create the action and the trigger.  The python action requires modules that are not provided by the default Cloud Function environment.  It is required to [Package multiple Python files into a .zip file](https://cloud.ibm.com/docs/openwhisk?topic=openwhisk-prep#prep_python_pkg).  If you are using the cloud shell, great!  If not it requires a `pip install virtualenv` into a python3 environment to use the `virtualenv` command to create tne virtualenv directory to put in the zip.  The script runs this in docker, but you can run the `actions/virtualenv_init.sh` by hand on your computer to avoid using docker (if you do not mind installing virtualenv on your computer).
+1. Create the action and the trigger.  The python action requires python modules that are not provided by the default Cloud Function environment.  It is required to [Package multiple Python files into a .zip file](https://cloud.ibm.com/docs/openwhisk?topic=openwhisk-prep#prep_python_pkg).  If you are using the cloud shell, great!  If not it requires a `pip install virtualenv` into a python3 environment to use the `virtualenv` command to create tne virtualenv directory to put in the zip.  The script runs this in docker, but you can run the `actions/virtualenv_init.sh` by hand on your computer to avoid using docker (if you do not mind installing virtualenv on your computer).
 
    ```sh
    ./020-create-functions.sh
    ```
 
-1. Create a VPC with two instances and a Flow Log collector for the vpc.  The vsi1 is public.  The vsi2 is private and only accesible from vsi1.  For a full explination see TODO BLOG POST
+1. Create a VPC with two instances in the vpc.  The vsi1 is public.  The vsi2 is private and only accesible from vsi1.  For a full explination see TODO BLOG POST inside IBM cloud see https://ibm.ent.box.com/notes/532826463321  Create the flow log collector.
 
    ```sh
    ./030-create-vpc.sh
