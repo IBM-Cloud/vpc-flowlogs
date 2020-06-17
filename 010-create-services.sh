@@ -20,6 +20,23 @@ fi
 
 ibmcloud cos config crn --crn $COS_INSTANCE_CRN --force
 
+echo '>>> iam authorization policy from flow-log-collector to COS bucket'
+EXISTING_POLICIES=$(ibmcloud iam authorization-policies --output JSON)
+if echo "$EXISTING_POLICIES" | \
+  jq -e '.[] |
+  select(.subjects[].attributes[].value=="flow-log-collector") |
+  select(.subjects[].attributes[].value=="is") |
+  select(.roles[].display_name=="Writer") |
+  select(.resources[].attributes[].value=="cloud-object-storage") |
+  select(.resources[].attributes[].value=="'$COS_INSTANCE_CRN'")' > /dev/null; then
+  echo "Writer policy between flow-log-collector and COS bucket already exists"
+else
+  ibmcloud iam authorization-policy-create is cloud-object-storage \
+    Writer \
+    --source-resource-type flow-log-collector \
+    --target-service-instance-id $COS_INSTANCE_CRN
+fi
+
 # Create the bucket
 if ibmcloud cos head-bucket --bucket $COS_BUCKET_NAME --region $COS_REGION > /dev/null 2>&1; then
   echo "Bucket already exists"
@@ -30,7 +47,6 @@ else
     --ibm-service-instance-id $COS_INSTANCE_CRN \
     --region $COS_REGION
 fi
-
 
 if ibmcloud resource service-instance $LOGDNA_SERVICE_NAME > /dev/null 2>&1; then
   echo "LogDNA service $LOGDNA_SERVICE_NAME already exists"

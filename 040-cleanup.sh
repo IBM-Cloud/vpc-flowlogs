@@ -21,6 +21,19 @@ ibmcloud fn action delete log
 NAMESPACE=$PREFIX-actions
 ibmcloud fn namespace delete $NAMESPACE
 
+# Resource authorizations:
+echo '>>> iam authorization policy from flow-log-collector to COS bucket'
+COS_INSTANCE_ID=$(ibmcloud resource service-instance --output JSON $COS_SERVICE_NAME | jq -r '.[0].guid')
+EXISTING_POLICIES=$(ibmcloud iam authorization-policies --output JSON)
+EXISTING_POLICY_ID=$(echo "$EXISTING_POLICIES" | \
+  jq -r '.[] |
+  select(.subjects[].attributes[].value=="flow-log-collector") |
+  select(.subjects[].attributes[].value=="is") |
+  select(.roles[].display_name=="Writer") |
+  select(.resources[].attributes[].value=="cloud-object-storage") |
+  select(.resources[].attributes[].value=="'$COS_INSTANCE_ID'")|.id')
+ibmcloud iam authorization-policy-delete $EXISTING_POLICY_ID -f
+
 # Services
 COS_INSTANCE_ID=$(ibmcloud resource service-instance --output JSON $COS_SERVICE_NAME | jq -r .[0].id)
 ibmcloud resource service-instance-delete $COS_INSTANCE_ID --force --recursive
