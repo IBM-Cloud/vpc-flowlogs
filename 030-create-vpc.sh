@@ -25,7 +25,7 @@ ibmcloud schematics apply --id $workspace_id --var-file schematics.tfvars -f
 poll_for_latest_action_to_finish $workspace_id
 
 echo '>>> get vpc id'
-vpc_id=$(ibmcloud schematics workspace output --id $workspace_id --json | jq -r '.[0].output_values[0]|.vpc_id.value')
+vpc_id=$(ibmcloud schematics output --id $workspace_id --json | jq -r '.[0].output_values[0]|.vpc_id.value')
 
 echo ">>> create flow log collector for vpc $vpc_id"
 ibmcloud is flow-log-create --bucket $COS_BUCKET_NAME --target $vpc_id --name $PREFIX-flowlog
