@@ -78,3 +78,7 @@ To delete the services and Cloud Functions artifacts, run:
    ```sh
    ./040-cleanup.sh
    ```
+
+## Download the flowlog files
+
+See [actions/README.md](./actions/README.md) for a python based cli tool to download the flow logs.

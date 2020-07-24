@@ -185,15 +185,15 @@ def call_main(keys):
         })
 
 
-@click.command()
+@click.command(help="Fetch and concatinate flow logs.  Set environment variables COS_BUCKET_NAME, COS_API_KEY, COS_INSTANCE_ID before using.")
 @click.option("--keys", default=False, is_flag=True, help="list all of the keys in the bucket and exit")
 @click.option("--fetch/--no-fetch", default=True, is_flag=True, help="fetch all of the flow logs from the bucket")
 @click.option("--deleteallflowlogsincos", default=False, is_flag=True, help="Delete all of the flow logs in the COS bucket FOREVER")
 @click.option("-d", "--directory", default="data", help="dir to store files")
-@click.option("-b", "--bucket", help="bucket name will use environment variable if not supplied")
+@click.option("-b", "--bucket", help="bucket name will use environment variable COS_BUCKET_NAME if not supplied")
 @click.option("--concat/--no-concat", default=True, help="concat all the downloaded files after fetching")
-@click.option("-s", "--simulate", default=False, is_flag=True, help="simulate function call to main")
-@click.option("--key", default="", help="COS key, or a number to specify that many keys from the sored list of all keys, or a file that contains a json string with a 'key' key (.i.e path name to a previously fetched file like data/00001209)")
+@click.option("-s", "--simulate", default=False, is_flag=True, help="simulate function call to main that is used for testing LogDNA integegration: set environment variables LOGDNAKEY, LOGDNA_INGESTION_ENDPOINT, COSENDPOINT")
+@click.option("--key", default="", help="A number to specify how many keys from the sored list of all keys (default -1 means all), or a COS key, or a file that contains a json string with a 'key' key (.i.e path name to a previously fetched file like data/00001209)")
 @click.option('--logdna', type=click.Choice([logdna_choice_1sec], case_sensitive=False), help="log to logdna, 1sec log hello to exactly 1 sec after the current time")
 def cli(keys, fetch, deleteallflowlogsincos, directory, bucket, concat, simulate, key, logdna):
     dir_path = Path(directory)
