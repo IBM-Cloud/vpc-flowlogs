@@ -10,6 +10,9 @@ ibmcloud target -g $RESOURCE_GROUP_NAME
 echo ">>> Targeting vpc generation 2..."
 ibmcloud is target --gen 2
 
+echo ">>> Verify the VPC ssh key exists..."
+ibmcloud is keys --json | jq -e '.[] | select(.name=="'$TF_VAR_ssh_key_name'")' > /dev/null
+
 echo ">>> Ensuring Cloud Object Storage plugin is installed"
 if ibmcloud cos config list >/dev/null; then
   echo "cloud-object-storage plugin is OK"
