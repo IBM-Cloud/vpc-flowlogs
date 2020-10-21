@@ -65,7 +65,7 @@ Or use your own computer and make sure to install:
    ./020-create-functions.sh
    ```
 
-1. Create a VPC with two instances in the vpc.  The vsi1 is public.  The vsi2 is private and only accesible from vsi1.  For a full explination see TODO BLOG POST inside IBM cloud see https://ibm.ent.box.com/notes/532826463321  Create the flow log collector.
+1. Create a VPC with two instances in the vpc.  The vsi1 is public.  The vsi2 is private and only accesible from vsi1.  For a full explanation see the [blog post](https://www.ibm.com/cloud/blog/use-ibm-log-analysis-with-logdna-to-analyze-vpc-network-traffic-from-ibm-cloud-flow-logs-for-vpc).
 
    ```sh
    ./030-create-vpc.sh
