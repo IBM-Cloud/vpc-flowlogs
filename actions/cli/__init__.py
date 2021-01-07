@@ -58,11 +58,30 @@ def get_keys(bucket):
         ret.append(o['Key'])
     return ret
 
+def bucket_key_to_file_name(key):
+    end_of_bucket = key.find('/')
+    # key is like: ibm_vpc_flowlogs_v1/account=713c783d9a507a532834766793c37cc74/region=a/hour=20/stream-id=20210106T202552Z/00000000.gz
+    part_str = key[end_of_bucket + 1:-3] # after the first / and not including the .gz
+    parts = part_str.split('/')
+    part_map = {}
+    id = None
+    for part in parts:
+        left_right = part.split("=")
+        if len(left_right) == 2:
+            part_map[left_right[0]] = left_right[1]
+        elif len(left_right) == 1:
+            assert id == None
+            id = part
+        else:
+            raise Exception("bad key")
+    #return part_map["stream-id"]
+    return id
+
 def fetch_file(bucket, key, dir_path):
     all = set()
     if not dir_path.exists():
         dir_path.mkdir()
-    f = key.split('/')[-1][:-3]
+    f = bucket_key_to_file_name(key)
     if f in all:
         click.echo(f'duplicate file {f}')
     all = all | set(f)
@@ -199,7 +218,7 @@ def cli(keys, fetch, deleteallflowlogsincos, directory, bucket, concat, simulate
     dir_path = Path(directory)
     if simulate:
         if key == "":
-            key = "1"
+            key = "-1"
         call_main(keys_from_key_parameter(key))
         return
     if logdna:

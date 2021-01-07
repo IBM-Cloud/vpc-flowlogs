@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+skip=false
+if [ $# == 1 ] && [ $1 == skip ]; then
+  skip=true
+fi
+
 echo '>>> cloud function namespace'
 NAMESPACE=$PREFIX-actions
 if ibmcloud fn property set --namespace $NAMESPACE > /dev/null 2>&1; then
@@ -53,18 +58,31 @@ else
     --param event_types create
 fi
 
-# create a zip of the virtualenv/ and of __main__.py
-echo '>>> create zip of python action'
-( cd actions; ./zipit.sh )
+if [ $skip == false ]; then
+  # create a zip of the virtualenv/ and of __main__.py
+  echo '>>> create zip of python action'
+  ( cd actions; ./zipit.sh )
 
-# the fn update comand will create the action if it does not exist or update if it does exist
-echo '>>> update action with python zip'
-ibmcloud fn action update log --param cosApiKey $COS_API_KEY --param cosInstanceId $COS_INSTANCE_ID --param logdnaKey $LOGDNA_INGESTION_KEY --param logdnaIngestionEndpoint $LOGDNA_INGESTION_ENDPOINT actions/log.zip --kind python:3.7
+  # the fn update comand will create the action if it does not exist or update if it does exist
+  echo '>>> update action with python zip'
+  ibmcloud fn action update log --param cosApiKey $COS_API_KEY --param cosInstanceId $COS_INSTANCE_ID --param logdnaKey $LOGDNA_INGESTION_KEY --param logdnaIngestionEndpoint $LOGDNA_INGESTION_ENDPOINT actions/log.zip --kind python:3.7
 
-# connect the trigger to the action via a rule
-echo '>>> rule from trigger to action'
-if ibmcloud fn rule get create-rule > /dev/null 2>&1; then
-  echo "Rule already exists"
-else
-  ibmcloud fn rule create create-rule create-trigger log
+  # connect the trigger to the action via a rule
+  echo '>>> rule from trigger to action'
+  if ibmcloud fn rule get create-rule > /dev/null 2>&1; then
+    echo "Rule already exists"
+  else
+    ibmcloud fn rule create create-rule create-trigger log
+  fi
 fi
+(
+  cd actions
+  cat > local.env <<EOF
+export COS_BUCKET_NAME=$COS_BUCKET_NAME
+export COS_API_KEY=$COS_API_KEY
+export COS_INSTANCE_ID=$COS_INSTANCE_ID
+export LOGDNAKEY=$LOGDNA_API_KEY
+export LOGDNA_INGESTION_ENDPOINT=$LOGDNA_INGESTION_ENDPOINT
+export COSENDPOINT=s3.$REGION.cloud-object-storage.appdomain.cloud
+EOF
+)

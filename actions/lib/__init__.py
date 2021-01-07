@@ -110,5 +110,6 @@ def main(args):
         timestamp = get_start_millisec_timestamp(row_json)
         out_str = json.dumps(row_json)
         row_log_args = {**log_args, **{"timestamp": timestamp}}
-        get_logger(args["logdnaKey"], args["logdnaIngestionEndpoint"]).info(out_str, row_log_args)
+        # get_logger(args["logdnaKey"], args["logdnaIngestionEndpoint"]).info(out_str, row_log_args)
+        get_logger(args["logdnaKey"], args["logdnaIngestionEndpoint"]).info(out_str)
     return args

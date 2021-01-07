@@ -81,4 +81,4 @@ To delete the services and Cloud Functions artifacts, run:
 
 ## Download the flowlog files
 
-See [actions](./actions) for a python based cli tool to download the flow logs.
+See [actions](./actions) for a python based cli tool to download the flow logs and test out the code.
