@@ -10,6 +10,7 @@ else
 fi
 
 COS_INSTANCE_CRN=$(ibmcloud resource service-instance --output JSON $COS_SERVICE_NAME | jq -r '.[0].id')
+COS_INSTANCE_GUID=$(ibmcloud resource service-instance --output JSON $COS_SERVICE_NAME | jq -r '.[0].guid')
 echo "Cloud Object Storage CRN is $COS_INSTANCE_CRN"
 
 if ibmcloud resource service-key $COS_SERVICE_NAME-for-functions > /dev/null 2>&1; then
@@ -28,7 +29,7 @@ if echo "$EXISTING_POLICIES" | \
   select(.subjects[].attributes[].value=="is") |
   select(.roles[].display_name=="Writer") |
   select(.resources[].attributes[].value=="cloud-object-storage") |
-  select(.resources[].attributes[].value=="'$COS_INSTANCE_CRN'")' > /dev/null; then
+  select(.resources[].attributes[].value=="'$COS_INSTANCE_GUID'")' > /dev/null; then
   echo "Writer policy between flow-log-collector and COS bucket already exists"
 else
   ibmcloud iam authorization-policy-create is cloud-object-storage \

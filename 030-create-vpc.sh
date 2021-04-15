@@ -27,9 +27,8 @@ poll_for_latest_action_to_finish $workspace_id
 echo '>>> get vpc id'
 vpc_id=$(ibmcloud schematics output --id $workspace_id --json | jq -r '.[0].output_values[0]|.vpc_id.value')
 
-echo ">>> create flow log collector for vpc $vpc_id"
-ibmcloud is target --gen 2
-ibmcloud is flow-log-create --bucket $COS_BUCKET_NAME --target $vpc_id --name $PREFIX-flowlog
+echo '>>> put vpc id into file vpcid.txt'
+echo $vpc_id > vpcid.txt
 
 echo '>>> to exercise the vpc'
 ibmcloud schematics output --id $workspace_id --json | jq -r '.[0]|.output_values[0]|.ibm1_curl.value'
