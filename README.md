@@ -65,11 +65,19 @@ Or use your own computer and make sure to install:
    ./020-create-functions.sh
    ```
 
-1. Create a VPC with two instances in the vpc.  The vsi1 is public.  The vsi2 is private and only accesible from vsi1.  For a full explanation see the [blog post](https://www.ibm.com/cloud/blog/use-ibm-log-analysis-with-logdna-to-analyze-vpc-network-traffic-from-ibm-cloud-flow-logs-for-vpc).
+1. Optionally create a VPC with two instances in the vpc and put the vpc id into the file vpcid.txt.  The vsi1 is public.  The vsi2 is private and only accesible from vsi1.  For a full explanation see the [blog post](https://www.ibm.com/cloud/blog/use-ibm-log-analysis-with-logdna-to-analyze-vpc-network-traffic-from-ibm-cloud-flow-logs-for-vpc).
 
    ```sh
    ./030-create-vpc.sh
    ```
+
+1. if you skipped the previous optional step put your existing vpc id into vpcid.txt:
+
+   ```sh
+   cat vpcid.txt
+   ./035-flow-log-create.sh
+   ```
+
 
 ## Cleanup
 
