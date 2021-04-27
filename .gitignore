@@ -9,3 +9,4 @@ terraform.tfstate*
 schematics.json
 schematics.tfvars
 vpcid.txt
+.DS_Store

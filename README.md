@@ -1,16 +1,16 @@
-# Analyze VPC Flow Logs using LogDNA
+# Analyze VPC Flow Logs
 
 [Flow logs for VPC](https://cloud.ibm.com/vpc-ext/network/flowLogs) store metadata for the network traffic in Virtual Private Clouds, VPC in Cloud Object Storage (COS) buckets.
 
 [Cloud Functions](https://cloud.ibm.com/functions) can be extended by [integrating with Cloud Object Storage (COS)](https://cloud.ibm.com/docs/openwhisk?topic=cloud-functions-pkg_obstorage). The COS trigger type lets you run custom code logic when a new object is stored, updated, or deleted from a designated bucket in COS. 
 
-This project shows how use a trigger function to read a flow log COS object and write it to [LogDNA](https://cloud.ibm.com/observe/logging).
+This project shows how use a trigger function to read a flow log COS object and write it to [IBM log analysis](https://cloud.ibm.com/observe/logging).
 
-![create flow](./xdocs/vpc-flow-log-dna.png)
+![create flow](./xdocs/vpc-flow-log.png)
 
 1. The Flow logs for VPC are written to a COS bucket.
 1. Cloud Object Storage sends an event to Cloud Functions.
-1. This event triggers a log action to write LogDNA entries.
+1. This event triggers a log action to write log entries.
 
 ## Deploy the project
 
@@ -48,7 +48,7 @@ Or use your own computer and make sure to install:
    ./000-prereqs.sh
    ```
 
-1. Create Cloud Object Storage and LogDNA services.
+1. Create Cloud Object Storage and Log analysis services.
 
    ```sh
    ./010-create-services.sh
@@ -57,7 +57,7 @@ Or use your own computer and make sure to install:
    If they do not already exist, the script creates:
       * a Cloud Object Storage service instance and a service key,
       * a storage bucket
-      * a LogDNA service instance and a service key.
+      * a log analysis service instance and a service key.
 
 1. Create the action and the trigger.  The python action requires python modules that are not provided by the default Cloud Function environment.  It is required to [Package multiple Python files into a .zip file](https://cloud.ibm.com/docs/openwhisk?topic=openwhisk-prep#prep_python_pkg).  If you are using the cloud shell, great!  If not it requires a `pip install virtualenv` into a python3 environment to use the `virtualenv` command to create tne virtualenv directory to put in the zip.  The script runs this in docker, but you can run the `actions/virtualenv_init.sh` by hand on your computer to avoid using docker (if you do not mind installing virtualenv on your computer).
 
