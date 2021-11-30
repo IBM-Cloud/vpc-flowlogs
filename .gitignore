@@ -10,3 +10,8 @@ schematics.json
 schematics.tfvars
 vpcid.txt
 .DS_Store
+apikey_file.json
+.vscode/
+__pycache__
+venv/
+deleteme/

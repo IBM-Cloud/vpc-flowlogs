@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-echo ">>> Targeting region $REGION..."
-ibmcloud target -r $REGION
+echo ">>> Targeting region $TF_VAR_region..."
+ibmcloud target -r $TF_VAR_region
 
 echo ">>> Targeting resource group $RESOURCE_GROUP_NAME..."
 ibmcloud target -g $RESOURCE_GROUP_NAME
@@ -23,14 +23,15 @@ else
   exit 1
 fi
 
-echo ">>> Ensuring Cloud Functions plugin is installed"
-if ibmcloud fn namespace list >/dev/null; then
-  echo "cloud-functions plugin is OK"
+echo ">>> Ensuring Code Engine plugin is installed"
+if ibmcloud ce project list >/dev/null; then
+  echo "code-engine plugin is OK"
 else
-  echo "Make sure cloud-functions plugin is properly installed with ibmcloud plugin install cloud-functions."
+  echo "Make sure code-engine plugin is properly installed with ibmcloud plugin install cloud-functions."
   exit 1
 fi
 
+echo TODO
 echo ">>> Ensuring Schematics plugin is installed"
 if ibmcloud schematics workspace list >/dev/null; then
   echo "schematics plugin is OK"
@@ -40,7 +41,7 @@ else
 fi
 
 echo ">>> Ensuring flowlogs are installed and working"
-if ibmcloud is flow-logs; then
+if ibmcloud is flow-logs > /dev/null; then
   echo "flow logs are available"
 else
   echo "Make sure flow logs are available in your account."
