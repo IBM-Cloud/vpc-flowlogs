@@ -29,6 +29,11 @@ Or use your own computer and make sure to install:
    * Code Engine plugin. Install it with `ibmcloud plugin install code-engine`.
    * [jq](https://stedolan.github.io/jq/) command line utility
 
+1. Login.  The login expires after about an hour, if you see failures you may need to login again.
+   ```
+   ibmcloud login
+   ```
+
 1. Copy the configuration file and set the values to match your environment. At a minimum, set or review the values for `PREFIX`, `RESOURCE_GROUP_NAME`, `REGION` and `TF_VAR_ssh_key_name`.
 
    ```sh

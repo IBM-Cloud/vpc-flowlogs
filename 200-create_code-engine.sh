@@ -92,14 +92,16 @@ service_id_for_cos_access() {
 
 ### create the apikey for the service id and store it in a file
 apikey_for_cos_access() {
-  if [ -e $apikey_file_for_service_id ]; then
-    echo ">>> using the previously fetched service api key file"
-  else
-    echo ">>> get the apikey store in file $apikey_file_for_service_id"
-    ibmcloud iam service-api-key-create $service_api_key_name $service_id --description "$ce_project_name COS READ WRITE" --file $apikey_file_for_service_id --output json
+  echo ">>> Check for existing service api key"
+  if result=$(ibmcloud iam service-api-key $service_api_key_name $service_id); then
+    echo ">>> existing service api key exists"
+    echo "$result"
+    echo ">>> delete existing service api key"
+    ibmcloud iam service-api-key-delete $service_api_key_name $service_id --force
   fi
-  echo ">>> using the fetched API key.  It is in the file $apikey_file_for_service_id"
-  apikey=$(jq -r .apikey $apikey_file_for_service_id)
+  echo ">>> Create new service api key"
+  service_api_key_json=$(ibmcloud iam service-api-key-create $service_api_key_name $service_id --description "$ce_project_name COS READ WRITE" --output json)
+  apikey=$(jq -r .apikey <<< "$service_api_key_json")
 }
 
 ### logdna service instance

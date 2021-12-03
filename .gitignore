@@ -1,6 +1,7 @@
 event.json
 an-image.jpg
 local.env
+demo.env
 node_modules
 package-lock.json
 terraform.tfstate*
