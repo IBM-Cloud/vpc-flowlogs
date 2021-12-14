@@ -1,3 +1,5 @@
+all: docker-build docker-push
+
 .PHONY: check-env
 check-env:
 ifndef DOCKER_IMAGE

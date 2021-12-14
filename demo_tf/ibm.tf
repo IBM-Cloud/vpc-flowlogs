@@ -87,6 +87,13 @@ resource "ibm_is_floating_ip" "vsi1" {
   tags = local.tags
 }
 
+output "BASENAME" {
+  value = var.basename
+}
+output "RESOURCE_GROUP_NAME" {
+  value = data.ibm_resource_group.group.name
+}
+
 output "vpc_id" {
   value = ibm_is_vpc.vpc.id
 }

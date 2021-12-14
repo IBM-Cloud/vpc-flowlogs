@@ -14,6 +14,7 @@ class LogdnaSynchronous:
     Logic taken from https://github.com/logdna/python
     """
     def __init__(self, ingestion_endpoint, key, hostname, options={}):
+        self.internalLogger = logging.getLogger('flowlog')
         self.url = f'{ingestion_endpoint}/logs/ingest'
         self.key = key
         self.hostname = hostname
@@ -26,9 +27,7 @@ class LogdnaSynchronous:
         self.user_agent = options.get('user_agent', 'python/1.18.1')
         self.buf_retention_limit = options.get('buf_retention_limit', 100000)
         self.loglevel = options.get('loglevel', 'INFO')
-
-        # Set Internal Logger
-        self.internalLogger = logging.getLogger('flowlog')
+        self.internalLogger.debug(f'url:{self.url} hostname:{self.hostname} retry_interval_secs:{self.retry_interval_secs} buf_retention_limit:{self.buf_retention_limit} loglevel:{self.loglevel} ')
 
 
     def clean_after_success(self):
@@ -59,6 +58,7 @@ class LogdnaSynchronous:
             #self.exception_flag = True
 
     def send_request(self, data):
+        self.internalLogger.info(f'logdna send_request buf_size:{self.buf_size}')
         try:
             response = requests.post(url=self.url,
                                      json=data,
@@ -112,7 +112,8 @@ class LogdnaSynchronous:
 
     def buffer_send(self, message):
         self.buffer(message)
-        self.try_request()
+        if self.buf_size > 0:
+            self.try_request()
 
     def emit(self, msg):
         "emit one message to logdna.  Note that the messages will actually be buffered"
@@ -126,4 +127,5 @@ class LogdnaSynchronous:
 
     def close(self):
         """finish up the final buffered request"""
-        self.try_request()
+        if self.buf_size > 0:
+            self.try_request()

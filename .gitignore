@@ -16,3 +16,5 @@ apikey_file.json
 __pycache__
 venv/
 deleteme/
+code_engine_config.sh
+python.ini

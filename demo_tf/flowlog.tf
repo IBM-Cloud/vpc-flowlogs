@@ -36,9 +36,18 @@ resource ibm_is_flow_log all_vpc {
   storage_bucket = ibm_cos_bucket.flowlog.bucket_name
 } 
 
-output cos_crn {
+output COS_CRN {
   value = ibm_resource_instance.cos.id
 }
-output cos_guid {
+output COS_GUID {
   value = ibm_resource_instance.cos.guid
+}
+output COS_BUCKET {
+  value = ibm_cos_bucket.flowlog.bucket_name
+}
+output COS_ENDPOINT {
+  value = replace(ibm_cos_bucket.flowlog.s3_endpoint_private, ".private.", ".direct.")
+}
+output COS_BUCKET_REGION {
+  value = var.region
 }

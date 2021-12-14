@@ -1,7 +1,7 @@
 #!/bin/bash
 
 source code_engine_config.sh
-source code_engine_constants.sh
+source code_engine_more_config.sh
 
 ce_subscription() {
   echo ibmcloud ce subscription cos delete --name $ce_subscription_name --force
@@ -54,8 +54,8 @@ ce_project() {
 
 ################
 # liberal use of global variables throughout
-echo ">>> Targeting region $REGION and resource group $RESOURCE_GROUP_NAME"
-ibmcloud target -r $REGION -g $RESOURCE_GROUP_NAME
+echo ">>> Targeting region for code engine $CE_REGION and resource group $RESOURCE_GROUP_NAME"
+ibmcloud target -r $CE_REGION -g $RESOURCE_GROUP_NAME
 
 ce_subscription
 ce_job

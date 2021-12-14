@@ -1,6 +1,7 @@
-BASENAME=flowlogdna-pfq00
-COS_CRN="crn:v1:bluemix:public:cloud-object-storage:global:a/713c783d9a507a53135fe6793c37cc74:04e42b77-0fef-4882-8321-8f19f518c544::"
-COS_GUID="04e42b77-0fef-4882-8321-8f19f518c544"
-COS_BUCKET="flowlogdna-pfq00-flowlog-001"
-REGION=us-south
-RESOURCE_GROUP_NAME=default
+BASENAME="flowlogdna01"
+COS_CRN="crn:v1:bluemix:public:cloud-object-storage:global:a/713c783d9a507a53135fe6793c37cc74:b4a54ea1-b9d8-4082-aee4-11c13663a80e::"
+COS_GUID="b4a54ea1-b9d8-4082-aee4-11c13663a80e"
+COS_BUCKET="flowlogdna01-flowlog-001"
+COS_ENDPOINT="s3.direct.us-south.cloud-object-storage.appdomain.cloud"
+COS_BUCKET_REGION="us-south"
+RESOURCE_GROUP_NAME="default"

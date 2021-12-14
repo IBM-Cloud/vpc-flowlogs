@@ -20,7 +20,7 @@ if ! [ -e code_engine_config.sh ]; then
   exit 1
 fi
 source code_engine_config.sh
-source code_engine_constants.sh
+source code_engine_more_config.sh
 
 ### ce project
 ce_project() {
@@ -53,23 +53,13 @@ authorization_policy_for_cos_ce_notifications() {
     ibmcloud iam authorization-policy-create codeengine cloud-object-storage "Notifications Manager" \
       --source-service-instance-name $ce_project_name \
       --target-service-instance-id $COS_CRN
-    sleep 5
+    existing_policies=$(ibmcloud iam authorization-policies --output JSON)
   fi
   if ! authorization_policy_exists; then
     echo '***' authorization policy does not exist
     exit 1
   fi
 
-  # create service id and read/writer policy for the cos bucket
-  if result=$(ibmcloud iam service-id $service_id_name --output json 2>&1); then
-    echo ">>> iam service-id exists $service_id_name"
-    echo "$result"
-  else
-    echo ">>> iam service-id-create $service_id_name"
-    service_id_json_one=$(ibmcloud iam service-id-create $service_id_name --output json)
-  fi
-  service_id_json=$(ibmcloud iam service-id $service_id_name --output json)
-  service_id=$(jq -r '.[0].id' <<< "$service_id_json")
 }
 
 ### service_id_for_cos_access
@@ -81,6 +71,17 @@ writer_service_policy_exists() {
     select(.resources[].attributes[].value=="'$COS_BUCKET'")' <<< "$existing_service_id_policies" > /dev/null
 }
 service_id_for_cos_access() {
+  # create service id and read/writer policy for the cos bucket
+  if result=$(ibmcloud iam service-id $service_id_name --output json 2>&1); then
+    echo ">>> iam service-id exists $service_id_name"
+    echo "$result"
+  else
+    echo ">>> iam service-id-create $service_id_name"
+    service_id_json_one=$(ibmcloud iam service-id-create $service_id_name --output json)
+  fi
+  service_id_json=$(ibmcloud iam service-id $service_id_name --output json)
+  service_id=$(jq -r '.[0].id' <<< "$service_id_json")
+
   existing_service_id_policies=$(ibmcloud iam service-policies $service_id --output json)
   if writer_service_policy_exists; then
     echo '>>> writer policy for bucket exists'
@@ -146,17 +147,17 @@ ce_secret() {
     ibmcloud_ce_secret create
   fi
   echo ">>> verify code engine secret"
-  ibmcloud ce secret get  -n $secret_for_apikey_name
 }
 
 ## ce_configmap
 ibmcloud_ce_configmap() {
   local command=$1
   ibmcloud ce configmap $command \
-    --from-literal REGION=$REGION \
+    --from-literal COS_ENDPOINT=$COS_ENDPOINT \
+    --from-literal LOGDNA_REGION=$LOGDNA_REGION \
     --from-literal COS_CRN="$COS_CRN" \
     --from-literal COS_BUCKET="$COS_BUCKET" \
-    --from-literal KEY_FIRST_LOGGED="$COS_CRN" \
+    --from-literal KEY_FIRST_LOGGED="$key_first_logged" \
     --name $ce_configmap_name
 }
 ce_configmap() {
@@ -170,40 +171,10 @@ ce_configmap() {
   ibmcloud ce configmap get --name $ce_configmap_name; # test
 }
 
-## ce_job
-ibmcloud_ce_job() {
-  local command=$1
-  ibmcloud ce job $command --name $ce_job_name --image $DOCKER_IMAGE --env-from-secret $secret_for_apikey_name --env-from-configmap $ce_configmap_name > /dev/null
-}
-ce_job() {
-  if result=$(ibmcloud_ce_job update 2>&1); then
-    echo '>>> updated code engine job'
-    echo "$result"
-  else
-    ibmcloud_ce_job create
-  fi
-}
-
-### ce_subscription
-ibmcloud_ce_subscription(){
-  command=$1
-  bucket_cos_bucket="$2"
-  ibmcloud ce subscription cos $command --name $ce_subscription_name --destination-type job --destination $ce_job_name $bucket_cos_bucket --event-type all
-}
-ce_subscription() {
-  if result=$(ibmcloud_ce_subscription update 2>&1); then
-    echo '>>> updated code engine subscription'
-    echo "$result"
-  else  
-    echo '>>> create code engine subscription'
-    ibmcloud_ce_subscription create "--bucket $COS_BUCKET"
-  fi
-}
-
 ################
 # liberal use of global variables throughout
-echo ">>> Targeting region $REGION and resource group $RESOURCE_GROUP_NAME"
-ibmcloud target -r $REGION -g $RESOURCE_GROUP_NAME
+echo ">>> Targeting region for code engine $CE_REGION and resource group $RESOURCE_GROUP_NAME"
+ibmcloud target -r $CE_REGION -g $RESOURCE_GROUP_NAME
 
 ce_project
 authorization_policy_for_cos_ce_notifications
@@ -215,8 +186,6 @@ echo '>>> create a logdna service key and from it get the ingestion key for code
 logdna_service_key_and_ingestion_key
 ce_secret
 ce_configmap
-ce_job
-ce_subscription
 ################
 
 success=true

@@ -12,46 +12,60 @@ import logging
 log = logging.getLogger("flowlog")
 
 
-def cos_regional_endpoint(region):
-  return f's3.{region}.cloud-object-storage.appdomain.cloud'
-
 def logdna_regional_endpoint(region):
   return f"https://logs.{region}.logging.cloud.ibm.com"
 
-def ce_jobrun(CE_DATA, logdna_ingestion_key, apikey, cos_crn, cos_bucket, region, key_first_logged):
+def ce_jobrun(CE_DATA, logdna_ingestion_key, logdna_region, apikey, cos_crn, cos_bucket, cos_endpoint, key_first_logged):
     """read/log the one key passed to the job or all of the keys"""
-    version = 6
+    version = 7
     log.info(f"version={version}")
-    cos_region = region
-    cos_endpoint = cos_regional_endpoint(cos_region)
-    logdna_region = region
     logdna_endpoint = logdna_regional_endpoint(logdna_region)
     if CE_DATA:
       ce_data = json.loads(CE_DATA)
       if cos_bucket != ce_data["bucket"]:
-        log.error(f"misconfigured bucket in config map {cos_bucket} is not the same as the ce_data[bucket] {ce_data['bucket']}")
+        log.error(f"misconfigured bucket in config map in the environment does not match the bucket supplied by the COS subscription, COS_BUCKET:{cos_bucket},  CE_DATA[bucket]:{ce_data['bucket']}")
         cos_bucket = ce_data["bucket"]
       key = ce_data["key"]
-      log.info(f"key:{key}")
-      lib.log_cos_object_and_remember(logdna_endpoint, logdna_ingestion_key, apikey, cos_crn, cos_endpoint, cos_bucket, key, key_first_logged)
+      log.info(f"COS bucket:{cos_bucket}, key:{key}")
+      lib.log_cos_object_simple(logdna_endpoint, logdna_ingestion_key, apikey, cos_crn, cos_endpoint, cos_bucket, key, key_first_logged)
     else:
-      lib.log_all_cos_objects(logdna_endpoint, logdna_ingestion_key, apikey, cos_crn, cos_endpoint, cos_bucket, key_first_logged)
+      lib.log_all_cos_objects_simple(logdna_endpoint, logdna_ingestion_key, apikey, cos_crn, cos_endpoint, cos_bucket, key_first_logged)
+
+class CeEnviron():
+  def __init__(self):
+    self.missing = []
+    for key in [
+      "LOGDNA_INGESTION_KEY",
+      "APIKEY",
+      "COS_CRN",
+      "COS_BUCKET",
+      "COS_ENDPOINT",
+      "LOGDNA_REGION",
+      "KEY_FIRST_LOGGED",
+    ]:
+      if key in os.environ:
+        setattr(self, key, os.getenv(key))
+      else:
+        self.missing.append(key)
+  def summary_fail(self):
+    for key in self.missing:
+      log.error(f"Key must be in environment, key:{key}")
+    return len(self.missing) > 0
 
 def ce_job():
   """code engine job run from a job run or from a subscription"""
   log.info("ce_job")
-  LOGDNA_INGESTION_KEY = os.getenv("LOGDNA_INGESTION_KEY")
-  APIKEY = os.getenv("APIKEY")
-  log.debug(f"LOGDNA_INGESTION_KEY:{LOGDNA_INGESTION_KEY} APIKEY:{APIKEY}")
-  COS_CRN = os.getenv("COS_CRN")
-  COS_BUCKET = os.getenv("COS_BUCKET")
-  REGION = os.getenv("REGION")
-  KEY_FIRST_LOGGED = os.getenv("KEY_FIRST_LOGGED")
+  ce_environ = CeEnviron()
+  if ce_environ.summary_fail():
+    log.error("Exiting, required environment variables not supplied")
+    return
+  # log.debug(f"LOGDNA_INGESTION_KEY:{ce_environ.LOGDNA_INGESTION_KEY} APIKEY:{ce_environ.APIKEY}")
+  log.info(f"COS_CRN:{ce_environ.COS_CRN} COS_BUCKET:{ce_environ.COS_BUCKET} COS_ENDPOINT:{ce_environ.COS_ENDPOINT} LOGDNA_REGION:{ce_environ.LOGDNA_REGION} KEY_FIRST_LOGGED:{ce_environ.KEY_FIRST_LOGGED}")
   CE_DATA = os.getenv("CE_DATA", None)
-  log.info(f"COS_CRN:{COS_CRN} COS_BUCKET:{COS_BUCKET} REGION:{REGION} KEY_FIRST_LOGGED:{KEY_FIRST_LOGGED} CE_DATA:{CE_DATA}")
-  ce_jobrun(CE_DATA, LOGDNA_INGESTION_KEY, APIKEY, COS_CRN, COS_BUCKET, REGION, KEY_FIRST_LOGGED)
+  log.info(f"CE_DATA:{CE_DATA}")
+  ce_jobrun(CE_DATA, ce_environ.LOGDNA_INGESTION_KEY, ce_environ.LOGDNA_REGION, ce_environ.APIKEY, ce_environ.COS_CRN, ce_environ.COS_BUCKET, ce_environ.COS_ENDPOINT, ce_environ.KEY_FIRST_LOGGED)
 
 if __name__ == "__main__":
   logging.basicConfig()
   log.setLevel(os.getenv("LOG", default="INFO"))
-  lib.ce_job()
+  ce_job()
