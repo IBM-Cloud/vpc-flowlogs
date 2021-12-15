@@ -32,6 +32,21 @@ ce_job() {
   fi
 }
 
+## 
+check_platform_logging_instance() {
+  echo '>>> checking for logging instance in region'
+  instances=$(ibmcloud logging service-instances --output json)
+  if name=$(jq -er '.[]|select(.service_name=="logdna") | select(.doc.parameters.default_receiver==true) | .name'  <<< "$instances"); then
+    echo platform logging instance in $CE_REGION is $name
+  else
+    echo "*** there is no platform logging instance in region $CE_REGION.  It will not be possible to debug the code engine job using logs"
+    echo ">>> see https://cloud.ibm.com/docs/log-analysis?topic=log-analysis-config_svc_logs"
+  fi
+
+}
+
 ################
-ce_job
+ibmcloud target -r $CE_REGION -g $RESOURCE_GROUP_NAME
+#ce_job
+check_platform_logging_instance
 success=true

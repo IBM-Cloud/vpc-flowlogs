@@ -19,14 +19,6 @@ ce_secret() {
   ibmcloud ce secret delete -n $secret_for_apikey_name --force
 }
 
-logdna_service_key_and_ingestion_key() {
-  ibmcloud resource service-key-delete $logdna_service_name-for-code-engine --force
-}
-
-logdna_service_instance() {
-  ibmcloud resource service-instance-delete $logdna_service_name  --force
-}
-
 apikey_for_cos_access() {
   echo deleting the service id is enough
 }
@@ -61,8 +53,6 @@ ce_subscription
 ce_job
 ce_configmap
 ce_secret
-logdna_service_key_and_ingestion_key
-logdna_service_instance
 apikey_for_cos_access
 service_id_for_cos_access
 authorization_policy_for_cos_ce_notifications

@@ -3,7 +3,7 @@ locals {
 }
 
 resource "ibm_resource_instance" "cos" {
-  name              = local.name
+  name              = "${local.name}-cos"
   resource_group_id = local.resource_group
   service           = "cloud-object-storage"
   plan              = "standard"
@@ -20,7 +20,7 @@ resource "ibm_iam_authorization_policy" "is_flowlog_write_to_cos" {
 }
 
 resource "ibm_cos_bucket" "flowlog" {
-  bucket_name          = "${local.name}-flowlog-001"
+  bucket_name          = "${local.name}-cefl-001"
   resource_instance_id = ibm_resource_instance.cos.id
   region_location      = var.region
   #storage_class        = "flex"

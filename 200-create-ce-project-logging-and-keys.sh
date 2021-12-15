@@ -91,7 +91,7 @@ service_id_for_cos_access() {
   fi
 }
 
-### create the apikey for the service id and store it in a file
+### create the apikey for the service id 
 apikey_for_cos_access() {
   echo ">>> Check for existing service api key"
   if result=$(ibmcloud iam service-api-key $service_api_key_name $service_id); then
@@ -105,38 +105,10 @@ apikey_for_cos_access() {
   apikey=$(jq -r .apikey <<< "$service_api_key_json")
 }
 
-### logdna service instance
-logdna_service_instance() {
-  if result=$(ibmcloud resource service-instance $logdna_service_name 2>&1); then
-    echo ">>> LogDNA service $logdna_service_name already exists"
-    echo "$result"
-  else
-    echo ">>> Creating LogDNA Service..."
-    ibmcloud resource service-instance-create $logdna_service_name \
-      logdna "$LOGDNA_SERVICE_PLAN" $LOGDNA_REGION || exit 1
-  fi
-  LOGDNA_INSTANCE_CRN=$(ibmcloud resource service-instance --output JSON $logdna_service_name | jq -r .[0].id)
-  echo ">>> LogDNA ID is $LOGDNA_INSTANCE_CRN"
-}
-
-## create service key for logdna and extract the ingestion key
-logdna_service_key_and_ingestion_key() {
-  if logdna_service_key_json=$(ibmcloud resource service-key $logdna_service_name-for-code-engine --output json 2>/dev/null) ; then
-    echo "Service key already exists"
-  else
-    logdna_service_key_json_one=$(ibmcloud resource service-key-create $logdna_service_name-for-code-engine Manager --instance-id $LOGDNA_INSTANCE_CRN --output json)
-    logdna_service_key_json=$(ibmcloud resource service-key $logdna_service_name-for-code-engine --output json)
-  fi
-  # get the ingestion key to access to LogDNA service
-  logdna_api_key=$(jq -r '.[0].credentials.apikey' <<< "$logdna_service_key_json")
-  logdna_ingestion_key=$(jq -r '.[0].credentials.ingestion_key' <<< "$logdna_service_key_json")
-  #TODO Valid roles are Manager, Reader, Standard Member. 
-}
-
 ### ce_secret - create the code engine secret
 ibmcloud_ce_secret() {
   local command=$1
-  ibmcloud ce secret $command -n $secret_for_apikey_name --from-literal APIKEY="$apikey" --from-literal LOGDNA_INGESTION_KEY="$logdna_ingestion_key"
+  ibmcloud ce secret $command -n $secret_for_apikey_name --from-literal APIKEY="$apikey" --from-literal LOGDNA_INGESTION_KEY="$LOGDNA_INGESTION_KEY"
 }
 ce_secret() {
   if result=$(ibmcloud_ce_secret update 2>&1); then
@@ -171,21 +143,114 @@ ce_configmap() {
   ibmcloud ce configmap get --name $ce_configmap_name; # test
 }
 
+## ce_job
+ibmcloud_ce_job() {
+  local command=$1
+  ibmcloud ce job $command --name $ce_job_name --image $DOCKER_IMAGE --env-from-secret $secret_for_apikey_name --env-from-configmap $ce_configmap_name > /dev/null
+}
+ce_job() {
+  if result=$(ibmcloud_ce_job update 2>&1); then
+    echo '>>> updated code engine job'
+    echo "$result"
+  else
+    ibmcloud_ce_job create
+  fi
+}
+
+## 
+check_platform_logging_instance() {
+  echo '>>> checking for logging instance in region'
+  instances=$(ibmcloud logging service-instances --output json)
+  if name=$(jq -er '.[]|select(.service_name=="logdna") | select(.doc.parameters.default_receiver==true) | .name'  <<< "$instances"); then
+    echo platform logging instance in $CE_REGION is $name
+  else
+    echo "*** there is no platform logging instance in region $CE_REGION.  It will not be possible to debug the code engine job using logs"
+    echo ">>> see https://cloud.ibm.com/docs/log-analysis?topic=log-analysis-config_svc_logs"
+  fi
+
+}
+
+### ce_subscription
+ibmcloud_ce_subscription(){
+  command=$1
+  bucket_cos_bucket="$2"
+  ibmcloud ce subscription cos $command --name $ce_subscription_name --destination-type job --destination $ce_job_name $bucket_cos_bucket --event-type all
+}
+ce_subscription() {
+  if result=$(ibmcloud_ce_subscription update 2>&1); then
+    echo '>>> updated code engine subscription'
+    echo "$result"
+  else  
+    echo '>>> create code engine subscription'
+    ibmcloud_ce_subscription create "--bucket $COS_BUCKET"
+  fi
+}
+
+usage() {
+  echo 
+  echo USAGE:
+  echo "$0 [basic|job|subscription]"
+  echo "basic - code engine project, ConfigMap, secret, authorizations, iam apikey, ..."
+  echo "job - code engine job create or update"
+  echo "subscription - subscription from bucket to job"
+  echo "no options means do them all"
+  exit 1
+}
+
 ################
+basics=false
+job=false
+subscription=false
+case $# in
+0)
+  basics=true
+  job=true
+  subscription=true
+  ;;
+1)
+  case $1 in
+  basics)
+    basics=true
+    ;;
+  job)
+    job=true
+    ;;
+  subscription)
+    subscription=true
+    ;;
+  *)
+    usage
+    ;;
+  esac
+  ;;
+*)
+  usage
+  ;;
+esac
+
 # liberal use of global variables throughout
 echo ">>> Targeting region for code engine $CE_REGION and resource group $RESOURCE_GROUP_NAME"
 ibmcloud target -r $CE_REGION -g $RESOURCE_GROUP_NAME
 
-ce_project
-authorization_policy_for_cos_ce_notifications
-echo ">>> create a apikey used by the code engine job that can read/write the COS bucket"
-service_id_for_cos_access
-apikey_for_cos_access
-logdna_service_instance
-echo '>>> create a logdna service key and from it get the ingestion key for code engine job to write to logdna'
-logdna_service_key_and_ingestion_key
-ce_secret
-ce_configmap
+if [ $basics = true ]; then
+  ce_project
+  authorization_policy_for_cos_ce_notifications
+  echo ">>> create a apikey used by the code engine job that can read/write the COS bucket"
+  service_id_for_cos_access
+  apikey_for_cos_access
+  ce_secret
+  ce_configmap
+fi
+if [ $job = true ]; then
+   ce_job
+fi
+if [ $subscription = true ]; then
+  ce_subscription
+fi
+if [ $job = true ]; then
+  check_platform_logging_instance
+fi
+
 ################
 
 success=true
