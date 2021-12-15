@@ -9,11 +9,11 @@ This project shows how use a trigger function to read a flow log COS object and 
 ![create flow](./xdocs/vpc-flow-log.png)
 
 1. The Flow logs for VPC are written to a COS bucket.
-1. Cloud Object Storage sends an event to Cloud Engine.
-1. This event triggers a code engine execution to read the bucket and write log entries.
+1. Cloud Object Storage sends an event to Code Engine.
+1. This event triggers a code engine job execution to read the bucket and write log entries.
 
-## Create a vpc with flow logs enabled
-If you do not have a vpc then use the following mechansim to create a demo vpc and **code_engine_config.sh** file
+## Create demo VPC, COS bucket and logdna
+If you do not have a vpc then create a vpc, COS bucket, logdna service instance and **code_engine_config.sh** file using the demo scripts that use terraform
 ```
 # create a demo.env file with some terraform variables
 cp template.demo.env demo.env
@@ -21,37 +21,54 @@ cp template.demo.env demo.env
 edit demo.env
 # execute terraform and create a code_engine_config.sh file
 ibmcloud login
+000-demo-prerequisites.sh;
 100-demo-vpc-and-flowlog-bucket-create.sh;
-# take a look at the code_engine_config.sh file
+# take a look at the code_engine_config.sh file and note that it contains a logdna ingestion key secret - keep the file safe
 cat code_engine_config.sh
 ```
 
-If you already have a vpc make make sure that it has been configured with flowlogs and you know the details of the bucket containing the flowlogs.  Create the **code_engine_config.sh** file with your fingers:
+## Configure your existing VPC, COS bucket and logdna
+If you already have a vpc make make sure that it has been configured with flowlogs and you know the details of the bucket containing the flowlogs, and a Logdna instance and ingestion key.  Create the **code_engine_config.sh** file with your fingers:
 ```
 cp template.code_engine_config.sh code_engine_config.sh
-# read the comments in the file and configure variables to match your COS configuration
+# read the comments in the file and configure variables to match your COS bucket and logdna configuration
 edit code_engine_config.sh
 ```
 
-The file **code_engine_more_config.sh** has a few more configuration variables that you will probably not need to change.  Open the file in an editor and verify.
+The file **code_engine_more_config.sh** has a few more configuration variables that you likely not need to change.  Open the file in an editor and verify.
 
-## Create code engine project, job, ...
-The script 200-create-ce-project-logging-and-keys.sh will create the code engine project, job, environment variables for the job and secrets for the job based on the contents of the two files created in the previous step:
+## Create code engine job
+The script 200-create-ce-project-logging-and-keys.sh will create the code engine project, job, environment variables for the job and secrets for the job based on the contents of the two files:
 - code_engine_config.sh
 - code_engine_more_config.sh
 
+If you want to walk more slowly through the source code or make your own Docker image go to **Development** below.  Otherwise continue:
 ```
 ibmcloud login
+./150-ce-prerequsites
 ./200-create-ce-project-logging-and-keys.sh
 ```
 
-## Debug the python program on your desktop
-Optionally debug the python program on your desktop.
+## Clean up
+To destroy the code engine project, the logging instance, service id and authorization:
+```
+./800-cleanup-code-engine.sh
+```
 
-The python scripts in the job/ directory require some configuration variables.  The script below will create the python.ini file:
+If you created the demo VPC, COS instance and bucket:
+```
+./900-cleanup-demo.sh
+```
+
+# Development
+This section is for those that want to dig deeper into the source code or debug
+## Debug the python program on your desktop
+The python scripts in the job/ directory require some configuration variables.  The scripts below will create the code engine project but not the code engine job.  The code engine configmap and secrets will also be created.
 
 ```
-./300-python-debug-config.sh
+./150-ce-prerequsites
+./200-create-ce-project-logging-and-keys.sh basics; # project, configmap and secrets
+./300-python-debug-config.sh; # make python.ini with configuration including secrets for running locally
 ```
 
 Set up your python 3.9 environment.  I use a virtual python environment on my laptop.
@@ -61,20 +78,18 @@ $ python --version
 Python 3.9.6
 ```
 
+Python source code is in the job/ directory
 ```
 cd job
 pip install --no-cache-dir -r requirements.txt
-pip install --no-cache-dir -r requirements-dev.txt
 ```
 
 The python script **./test_flowlog_to_logdna.py** can be executed to find a key in the cos bucket and send it to logdna.
 
-
 ## Create a docker image
-Optionally create a docker image on your desktop and push it to docker hub.  Feel free to use the one configured in **code_engine_more_config.sh** :
+The docker image on your desktop and push it to docker hub.
 
 Work in the **job/** directory:
-
 ```
 cd job
 ```
@@ -97,32 +112,42 @@ make docker-build
 make docker-push
 ```
 
-## Create job
-
-The code engine project was created earlier and now the job can be created.
+Deploy using your own docker image.  The script is smart enough to use the resources that were created earlier if they exist:
 ```
-./400-job-create.sh
+./150-ce-prerequsites
+./200-create-ce-project-logging-and-keys.sh
 ```
 
-Optionally check out the **job** in the IBM cloud console in the [Code Engine Projects](https://cloud.ibm.com/codeengine/projects)
+## Log existing flow logs
+This section explains how to send the objects previously created to logdna.  The steps above log the new flow logs as they are written, but you may have a bucket full of old flow logs that you want to analize.
+
+Create the basic code engine project and environment then create a job:
+```
+./150-ce-prerequsites
+./200-create-ce-project-logging-and-keys.sh basic
+./200-create-ce-project-logging-and-keys.sh job
+```
+
+Check out the **job** in the IBM cloud console in the [Code Engine Projects](https://cloud.ibm.com/codeengine/projects)
 - Click on your project to open it up.  Notice the **Secrets and Configmaps** tab and the **Jobs** tab
 - Click on the **Jobs** tab
 - Click on your job
+if you submit the job all of the VPC flow log objects in the bucket will be written to the Logging instance.  This has been tested with a few thousand, but you could have more if you have been accumulating them for a few days.  
 
-You can skip this step, but if you submit the job all of the VPC flow log objects in the bucket will be written to the Logging instance.  This has been tested with a few thousand, but you could have more if you have been accumulating them for a few days.  
+Before creating the job it can be helpful to deploy a platform logging instance in the same region as the code engine job.
 
 ## Subscribe to COS bucket
 
-To capture all flowlogs as they are written to the bucket, subscribe the job to COS bucket events.  The subscription will call the job each time flowlog puts an object into the bucket
+After completing the previous step to capture the existing flow logs turn on subscriptions to get the new ones.
+
+The subscription will call the job each time flowlog puts an object into the bucket:
 ```
-./500-subscription-create.sh
+./200-create-ce-project-logging-and-keys.sh job subscription
 ```
 
 In the ibm cloud console visit [Observability Logging](https://cloud.ibm.com/observe/logging) and click on your loggin instance. Then click on **Open Dashboard** to open the actual logs.  You should start to see VPC flow logs in about 10 minutes.
 
 ## Troubleshoot
-
-If your Logging instance does not have flow log entries verify that you have opened the logging instance in the region configured with the name matching the one in **code_engine_more_config.sh**: LOGDNA_REGION, logdna_service_name.
 
 To troubleshoot problems start in the IBM cloud console in the [Code Engine Projects](https://cloud.ibm.com/codeengine/projects)
 - Click on your project to open it up.  Notice the **Secrets and Configmaps** tab and the **Jobs** tab
@@ -133,6 +158,7 @@ To troubleshoot problems start in the IBM cloud console in the [Code Engine Proj
   - Configmap reference - click on the **Configmap** link and look at the environment variables that will be set in the job run
   - Secret reference - click on the **Secret** link and verify
     - LOGDNA_INGESTION_KEY - Open the Logging instance, click **Actions**, click **view Ingestion key**, verify the Ingestion Keys match.
+    - Verify the LOGDNA_REGION matches the region of the logging instance
     - APIKEY - In a terminal window using the APIKEY secret and variables from the Configmap verify that the APIKEY has access to the bucket and objects:
       - ibmcloud login --apikey APIKEY
       - ibmcloud cos config crn --crn COS_CRN
@@ -147,14 +173,3 @@ To troubleshoot problems start in the IBM cloud console in the [Code Engine Proj
 - You can add more logging to the python files test it locally and then follow the instructions above to make a docker image.  After pushing the docker image execute ./400-job-create.sh
 - 
 
-
-## Clean up
-To destroy the code engine project, the logging instance, service id and authorization:
-```
-./800-cleanup-code-engine.sh
-```
-
-If you created the demo VPC, COS instance and bucket:
-```
-./900-cleanup-demo.sh
-```

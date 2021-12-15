@@ -55,9 +55,12 @@ if __name__ == "__main__":
   # read the python.ini file and put the contents into the environment
   setup_environ()
   log.info("starting test")
-  python_ini=str(pathlib.Path(__file__).parent.parent / "python.ini")
+  python_ini=pathlib.Path(__file__).parent.parent / "python.ini"
+  if not python_ini.exists():
+    print(f"The python.ini file must exist, see README.md, file:{str(python_ini)}")
+    exit(1)
   config = configparser.ConfigParser()
-  config.read(python_ini)
+  config.read(str(python_ini))
   for k,v in config['env'].items():
     if k == "cos_endpoint":
       # If configured with the direct endpoint for COS bucket debugging from desktop is not going to work
