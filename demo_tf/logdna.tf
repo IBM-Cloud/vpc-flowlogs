@@ -17,10 +17,6 @@ output LOGDNA_REGION {
   value = var.region
 }
 
-output LOGDNA_NAME {
-  value = ibm_resource_instance.logdna.name
-}
-
 output LOGDNA_INGESTION_KEY {
   sensitive = true
   value = ibm_resource_key.logdna.credentials.ingestion_key

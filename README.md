@@ -1,44 +1,64 @@
 # Analyze VPC Flow Logs
 
-[Flow logs for VPC](https://cloud.ibm.com/vpc-ext/network/flowLogs/vpc) persists a digest of network traffic in a Virtual Private Clouds, VPC in a Cloud Object Storage (COS) bucket.
+[Flow logs for VPC](https://cloud.ibm.com/vpc-ext/network/flowLogs/vpc) persists a digest of network traffic in a Virtual Private Clouds (VPC) in a Cloud Object Storage (COS) bucket.
 
 [Code Engine](https://cloud.ibm.com/codeengine/overview) can be extended by [integrating with Cloud Object Storage (COS)](https://cloud.ibm.com/docs/codeengine?topic=codeengine-subscribe-cos-tutorial). The COS trigger type lets you run custom code logic when a new object is stored, updated, or deleted from a designated bucket in COS. 
 
-This project shows how use a trigger function to read a flow log COS object and write it to [IBM log analysis](https://cloud.ibm.com/observe/logging).
+This project shows how use a Code Engine notification to start the excecution of a Code Engine job which will read a flow log COS object and write it to [IBM log analysis](https://cloud.ibm.com/observe/logging).
 
-![create flow](./xdocs/vpc-flow-log.png)
+![create flow](./drawio/flowlog-to-logdna.png)
 
 1. The Flow logs for VPC are written to a COS bucket.
-1. Cloud Object Storage sends an event to Code Engine.
-1. This event triggers a code engine job execution to read the bucket and write log entries.
+1. Cloud Object Storage works with Code Engine to execute the job.
+1. Job reads the COS bucket object using an apikey for authorization
+1. Job writes the log entries
 
 ## Create demo VPC, COS bucket and logdna
-If you do not have a vpc then create a vpc, COS bucket, logdna service instance and **code_engine_config.sh** file using the demo scripts that use terraform
+If you do not have a vpc use the scripts below to create a vpc, COS bucket, logging service instance.  The script also creates a **code_engine_config.sh** file.
+
 ```
-# create a demo.env file with some terraform variables
+# create a demo.env file with some terraform variables tht suite your taste
 cp template.demo.env demo.env
-# read the comments in the file and configure variables to suit your taste
 edit demo.env
-# execute terraform and create a code_engine_config.sh file
-ibmcloud login
+source demo.env
+
+# verify prerequisites
 000-demo-prerequisites.sh;
+
+# execute terraform and create a code_engine_config.sh file
 100-demo-vpc-and-flowlog-bucket-create.sh;
+
 # take a look at the code_engine_config.sh file and note that it contains a logdna ingestion key secret - keep the file safe
 cat code_engine_config.sh
 ```
 
-## Configure your existing VPC, COS bucket and logdna
-If you already have a vpc make make sure that it has been configured with flowlogs and you know the details of the bucket containing the flowlogs, and a Logdna instance and ingestion key.  Create the **code_engine_config.sh** file with your fingers:
+## Configure your existing VPC, COS bucket and Logging
+If you already have a vpc make make sure that it has been configured with flowlogs and you know the details of the bucket containing the flowlogs, and a Logging service instance and ingestion key.
+
+To find the bucket navigate to the [Resources view](https://cloud.ibm.com/resources) and in the **Storage** section open your Cloud Object Storage instance.  Open the **Bucket** and then open the **Configuration** and find the **Direct** endpoint and the **Bucket instance CRN**
+
+To find the LOGDNA constants visit [Observability Logging](https://cloud.ibm.com/observe/logging) and click on your logging instance.  The region is a string like "us-south". Click **Actions**, click **view Ingestion key**
+
+Create the **code_engine_config.sh** file with your fingers:
 ```
-cp template.code_engine_config.sh code_engine_config.sh
 # read the comments in the file and configure variables to match your COS bucket and logdna configuration
+cp template.code_engine_config.sh code_engine_config.sh
 edit code_engine_config.sh
 ```
 
 The file **code_engine_more_config.sh** has a few more configuration variables that you likely not need to change.  Open the file in an editor and verify.
 
-## Create code engine job
-The script 200-create-ce-project-logging-and-keys.sh will create the code engine project, job, environment variables for the job and secrets for the job based on the contents of the two files:
+## Create code engine related resources
+The script 200-create-ce-project-logging-and-keys.sh will create resources as shown in the diagram above:
+- IAM service ID allowing access to COS and associated apikey
+- code engine project
+- code engine config map passed as environment variables to the job
+- code engine secrets for apikey and logdna ingestion key passed as environment variables to the job
+- service authorization allowing flow logs to write to a COS bucket. 
+- code engine job
+- code engine subscription from the COS bucket to the job
+
+All this was configured based on the contents of the two files:
 - code_engine_config.sh
 - code_engine_more_config.sh
 
@@ -48,6 +68,11 @@ ibmcloud login
 ./150-ce-prerequsites
 ./200-create-ce-project-logging-and-keys.sh
 ```
+
+## Observe the logs
+In the ibm cloud console visit [Observability Logging](https://cloud.ibm.com/observe/logging) and click on your logging instance. Then click on **Open Dashboard** to open the actual logs.  You should start to see VPC flow logs in about 10 minutes.
+
+If you do not see the logs check out **Troubleshooting** below
 
 ## Clean up
 To destroy the code engine project, the logging instance, service id and authorization:
@@ -98,6 +123,7 @@ Code engine scripts use the configuration file
 ```
 $ grep DOCKER  ../code_engine_more_config.sh
 export DOCKER_IMAGE=powellquiring/flowlog:1.1
+todo sample-flowlog-logdna
 ```
 
 You must use your own docker repository in docker hub. Change the environment variable in the file and export it into your environment:
@@ -145,9 +171,8 @@ The subscription will call the job each time flowlog puts an object into the buc
 ./200-create-ce-project-logging-and-keys.sh job subscription
 ```
 
-In the ibm cloud console visit [Observability Logging](https://cloud.ibm.com/observe/logging) and click on your loggin instance. Then click on **Open Dashboard** to open the actual logs.  You should start to see VPC flow logs in about 10 minutes.
 
-## Troubleshoot
+# Troubleshooting
 
 To troubleshoot problems start in the IBM cloud console in the [Code Engine Projects](https://cloud.ibm.com/codeengine/projects)
 - Click on your project to open it up.  Notice the **Secrets and Configmaps** tab and the **Jobs** tab

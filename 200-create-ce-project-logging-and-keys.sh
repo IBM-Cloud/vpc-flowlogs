@@ -22,6 +22,18 @@ fi
 source code_engine_config.sh
 source code_engine_more_config.sh
 
+### 
+cos_global_variables(){
+  COS_CRN=$(echo $COS_BUCKET_CRN | sed 's/\(.*\):[^:]*:[^:]*:[^:]*/\1/')::
+  COS_GUID=$(echo $COS_BUCKET_CRN | sed 's/.*:\([^:]*\):[^:]*:[^:]*/\1/')
+  bucket=$(echo $COS_BUCKET_CRN | sed 's/.*:[^:]*:\([^:]*\):[^:]*/\1/')
+  COS_BUCKET=$(echo $COS_BUCKET_CRN | sed 's/.*:[^:]*:[^:]*:\([^:]*\)/\1/')
+  if [ x$bucket != xbucket ]; then
+    echo "*** error parsing the COS_BUCKET_CRN:$COS_BUCKET_CRN"
+    exit 1
+  fi
+}
+
 ### ce project
 ce_project() {
   if ! ibmcloud ce project select --name $ce_project_name > /dev/null 2>&1; then
@@ -52,7 +64,7 @@ authorization_policy_for_cos_ce_notifications() {
     echo ">>> create notification role between code engine and COS already exists"
     ibmcloud iam authorization-policy-create codeengine cloud-object-storage "Notifications Manager" \
       --source-service-instance-name $ce_project_name \
-      --target-service-instance-id $COS_CRN
+      --target-service-instance-id $COS_GUID
     existing_policies=$(ibmcloud iam authorization-policies --output JSON)
   fi
   if ! authorization_policy_exists; then
@@ -233,6 +245,7 @@ echo ">>> Targeting region for code engine $CE_REGION and resource group $RESOUR
 ibmcloud target -r $CE_REGION -g $RESOURCE_GROUP_NAME
 
 if [ $basics = true ]; then
+  cos_global_variables
   ce_project
   authorization_policy_for_cos_ce_notifications
   echo ">>> create a apikey used by the code engine job that can read/write the COS bucket"
