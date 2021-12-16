@@ -9,7 +9,8 @@ BASENAME="flowlogdna01"
 # resource group name for all resources
 RESOURCE_GROUP_NAME="default"
 
-# These come from you existing COS bucket that is full of flow logs, yours will look something like these:
+# These come from you existing COS bucket that is full of flow logs, yours will look something like these, note the bucket crn
+# is the COS CRN with the string "bucket:YourBucketName" replaces the final :
 COS_BUCKET_CRN="crn:v1:bluemix:public:cloud-object-storage:global:a/713c783d9a507a53135fe6793c37cc74:14fb3378-0f87-4bb8-9eae-0e7ee71bf3ce:bucket:flowlogdna03-cefl-001"
 COS_ENDPOINT="s3.direct.us-south.cloud-object-storage.appdomain.cloud"
 

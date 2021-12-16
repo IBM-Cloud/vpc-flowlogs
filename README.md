@@ -88,7 +88,7 @@ If you created the demo VPC, COS instance and bucket:
 # Development
 This section is for those that want to dig deeper into the source code or debug
 ## Debug the python program on your desktop
-The python scripts in the job/ directory require some configuration variables.  The scripts below will create the code engine project but not the code engine job.  The code engine configmap and secrets will also be created.
+The python scripts in the job/ directory require some configuration variables.  The scripts below will create the code engine project but not the code engine job.  The code engine configmap and secrets will also be created and are needed to test the python code.
 
 ```
 ./150-ce-prerequsites
@@ -109,7 +109,7 @@ cd job
 pip install --no-cache-dir -r requirements.txt
 ```
 
-The python script **./test_flowlog_to_logdna.py** can be executed to find a key in the cos bucket and send it to logdna.
+The python script **./test_flowlog_to_logdna.py** can be executed to find a key in the cos bucket and send it to logdna.  You can make some changes to this file to test different scenarios.
 
 ## Create a docker image
 The docker image on your desktop and push it to docker hub.
@@ -128,7 +128,10 @@ todo sample-flowlog-logdna
 
 You must use your own docker repository in docker hub. Change the environment variable in the file and export it into your environment:
 ```
-edit ../code_engine_more_config.sh; # change DOCKER_IMAGE=YourRepository/flowlog:1.0
+# change DOCKER_IMAGE=YourRepository/flowlog:1.0
+edit ../code_engine_more_config.sh;
+
+# actually export it into your current shell environment to allow the Makefile to work
 export DOCKER_IMAGE=YourRepository/flowlog:1.0
 ```
 

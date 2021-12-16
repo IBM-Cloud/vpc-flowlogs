@@ -135,9 +135,13 @@ class KeyHeadOlder:
     older: bool # indication that it is older.
 
 class KeyFirstLogged:
-    """The key_first_logged is the key to an object.  The object contains a key - the key first logged.
-    Return the KeyHeadOlder of the key that is in the object.  If key_first_logged is None then all subsequent
-    objects will be processed and considered older"""
+    """This is an optimization to avoid calling head() on each object
+    The key_first_logged is the key to an object.  The object contains a key - the key of the first logged object.
+    The function older() can determine if the object is older using two mechanisms.  The key has a year, month, day, hour
+    which allows a quick declaration of newer object, otherwise the more accurate head() call will be made and stored for later
+    use in sorting.
+    If key_first_logged is None then all subsequent calls to older() will be considered older and head() is called and stored.
+    """
     def __init__(self, client, bucket, key_first_logged):
         self.client = client
         self.bucket = bucket
@@ -166,15 +170,15 @@ class KeyFirstLogged:
         return dict([n.split("=") for n in key.split("/")[1:-1]])
 
     def older(self, key: str):
-      """Is this key older then me, .i.e older then the first logged object, if no key_first_logged provided always provide the head"""
-      # if false is being returned there is no reason to head the object, so short circuit return
+      """Is this key older then me, .i.e older then the first logged object, if no key_first_logged provided
+      return head and consider it older"""
       if self.head_first_logged_object != None:
           key_name_params = self.split_key_name_params(key)
           for date_part in ("year", "month", "day", "hour"):
               if not(date_part in key_name_params) or self.key_name_params[date_part] > key_name_params[date_part]:
                   log.debug(f"short circuit newer object {key}")
                   return KeyHeadOlder(key, None, False)
-      # It is pretty old look more deeply:
+      # It is pretty old look, call head, which will be needed anyway to sort
       head = client_head_key(self.client, self.bucket, key) 
       if head == None:
           log.error(f"get_head failed.  bucket: {bucket}, key {key}")
@@ -231,8 +235,8 @@ def log_all_cos_objects_simple(logdna_endpoint, logdna_ingestion_key, apikey, co
     keys = keys_in_bucket(apikey, cos_crn, cos_endpoint, bucket)
     log.info(f'sorting a set of cos flowlog objects, a head will now be executed for each key, len:{len(keys)}')
     client = get_ibm_boto3_client(apikey, cos_crn, cos_endpoint)
+    # note that there is no key first logged in the simple case
     key_first_logged = KeyFirstLogged(client, bucket, None)
-    # to a head for all keys
     key_heads = [key_first_logged.older(key) for key in keys]
     key_heads = sorted(key_heads, key=lambda key_head: key_head.head['Metadata']['capture_start_time'])
     all_keys = [key_head.key for key_head in key_heads]
