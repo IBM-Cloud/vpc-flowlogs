@@ -23,10 +23,10 @@ edit demo.env
 source demo.env
 
 # verify prerequisites
-000-demo-prerequisites.sh;
+000-demo-prerequisites.sh
 
 # execute terraform and create a code_engine_config.sh file
-100-demo-vpc-and-flowlog-bucket-create.sh;
+100-demo-vpc-and-flowlog-bucket-create.sh
 
 # take a look at the code_engine_config.sh file and note that it contains a logdna ingestion key secret - keep the file safe
 cat code_engine_config.sh
@@ -65,7 +65,7 @@ All this was configured based on the contents of the two files:
 If you want to walk more slowly through the source code or make your own Docker image go to **Development** below.  Otherwise continue:
 ```
 ibmcloud login
-./150-ce-prerequsites
+./150-ce-prerequsites.sh
 ./200-create-ce-project-logging-and-keys.sh
 ```
 
@@ -91,7 +91,7 @@ This section is for those that want to dig deeper into the source code or debug
 The python scripts in the job/ directory require some configuration variables.  The scripts below will create the code engine project but not the code engine job.  The code engine configmap and secrets will also be created and are needed to test the python code.
 
 ```
-./150-ce-prerequsites
+./150-ce-prerequsites.sh
 ./200-create-ce-project-logging-and-keys.sh basics; # project, configmap and secrets
 ./300-python-debug-config.sh; # make python.ini with configuration including secrets for running locally
 ```
@@ -129,7 +129,7 @@ todo sample-flowlog-logdna
 You must use your own docker repository in docker hub. Change the environment variable in the file and export it into your environment:
 ```
 # change DOCKER_IMAGE=YourRepository/flowlog:1.0
-edit ../code_engine_more_config.sh;
+edit ../code_engine_more_config.sh
 
 # actually export it into your current shell environment to allow the Makefile to work
 export DOCKER_IMAGE=YourRepository/flowlog:1.0
@@ -143,7 +143,7 @@ make docker-push
 
 Deploy using your own docker image.  The script is smart enough to use the resources that were created earlier if they exist:
 ```
-./150-ce-prerequsites
+./150-ce-prerequsites.sh
 ./200-create-ce-project-logging-and-keys.sh
 ```
 
