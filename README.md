@@ -46,7 +46,7 @@ cp template.code_engine_config.sh code_engine_config.sh
 edit code_engine_config.sh
 ```
 
-The file **code_engine_more_config.sh** has a few more configuration variables that you likely not need to change.  Open the file in an editor and verify.
+The file **code_engine_more_config.sh** has a few more configuration variables that typically do not require edits.  Open the file in an editor and verify.
 
 ## Create code engine related resources
 The script 200-create-ce-project-logging-and-keys.sh will create resources as shown in the diagram above:
@@ -112,18 +112,17 @@ pip install --no-cache-dir -r requirements.txt
 The python script **./test_flowlog_to_logdna.py** can be executed to find a key in the cos bucket and send it to logdna.  You can make some changes to this file to test different scenarios.
 
 ## Create a docker image
-The docker image on your desktop and push it to docker hub.
+Create a docker image on your desktop and push it to docker hub.
 
 Work in the **job/** directory:
 ```
 cd job
 ```
 
-Code engine scripts use the configuration file
+The scripts use the configuration file:
 ```
-$ grep DOCKER  ../code_engine_more_config.sh
-export DOCKER_IMAGE=powellquiring/flowlog:1.1
-todo sample-flowlog-logdna
+grep DOCKER  ../code_engine_more_config.sh
+export DOCKER_IMAGE=ibmcom/sample-flowlog-logdna:latest
 ```
 
 You must use your own docker repository in docker hub. Change the environment variable in the file and export it into your environment:
@@ -132,6 +131,9 @@ You must use your own docker repository in docker hub. Change the environment va
 edit ../code_engine_more_config.sh
 
 # actually export it into your current shell environment to allow the Makefile to work
+grep DOCKER  ../code_engine_more_config.sh
+export DOCKER_IMAGE=YourRepository/flowlog:1.0
+# now export DOCKER_IMAGE into your shell environment:
 export DOCKER_IMAGE=YourRepository/flowlog:1.0
 ```
 
@@ -141,7 +143,7 @@ make docker-build
 make docker-push
 ```
 
-Deploy using your own docker image.  The script is smart enough to use the resources that were created earlier if they exist:
+Deploy using your own docker image.  The script is smart enough to update the resources that were created earlier if they exist:
 ```
 ./150-ce-prerequsites.sh
 ./200-create-ce-project-logging-and-keys.sh
@@ -199,5 +201,3 @@ To troubleshoot problems start in the IBM cloud console in the [Code Engine Proj
 - The next job will have more logging info
 - You should be able to track back to the python program in the **job/** folder for problems.   You can run the python program on your laptop using the instructions above.
 - You can add more logging to the python files test it locally and then follow the instructions above to make a docker image.  After pushing the docker image execute ./400-job-create.sh
-- 
-
