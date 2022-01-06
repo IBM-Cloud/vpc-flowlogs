@@ -172,7 +172,7 @@ ce_job() {
 ## 
 check_platform_logging_instance() {
   echo '>>> checking for logging instance in region'
-  instances=$(ibmcloud logging service-instances --output json)
+  instances=$(ibmcloud logging service-instances --all-resource-groups --output json)
   if name=$(jq -er '.[]|select(.service_name=="logdna") | select(.doc.parameters.default_receiver==true) | .name'  <<< "$instances"); then
     echo platform logging instance in $CE_REGION is $name
   else
