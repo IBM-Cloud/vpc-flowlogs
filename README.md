@@ -1,5 +1,5 @@
 # Analyze VPC Flow Logs
-This repository is the companion to the blog post [Use IBM Code Engine to push IBM VPC Flow Logs to IBM Log Analysis for analysis](TODO)
+This repository is the companion to the blog post [Use IBM Code Engine to push IBM VPC Flow Logs to IBM Log Analysis for analysis](https://www.ibm.com/cloud/blog/use-ibm-code-engine-to-push-ibm-vpc-flow-logs-to-ibm-log-analysis)
 
 [Flow logs for VPC](https://cloud.ibm.com/vpc-ext/network/flowLogs/vpc) persists a digest of network traffic in a Virtual Private Clouds (VPC) in a Cloud Object Storage (COS) bucket.
 
