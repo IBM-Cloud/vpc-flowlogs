@@ -123,7 +123,7 @@ cd job
 The scripts use the configuration file:
 ```
 grep DOCKER  ../code_engine_more_config.sh
-export DOCKER_IMAGE=ibmcom/sample-flowlog-logdna:latest
+export DOCKER_IMAGE=icr.io/solution-tutorials/sample-flowlog-logdna:latest
 ```
 
 You must use your own docker repository in docker hub. Change the environment variable in the file and export it into your environment:
