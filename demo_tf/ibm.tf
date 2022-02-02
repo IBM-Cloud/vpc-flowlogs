@@ -26,9 +26,9 @@ data "ibm_is_image" "ubuntu" {
 
 ## Resources
 resource "ibm_is_vpc" "vpc" {
-  name = var.basename
-  resource_group            = local.resource_group
-  tags = local.tags
+  name           = var.basename
+  resource_group = local.resource_group
+  tags           = local.tags
 }
 
 # vsi1 access 
@@ -49,42 +49,42 @@ resource "ibm_is_security_group_rule" "sg1_ingress_app_all" {
   }
 }
 locals {
-  ibm_vsi1_user_data = "${replace(local.shared_app_user_data, "REMOTE_IP", ibm_is_instance.vsi2.primary_network_interface.0.primary_ipv4_address)}"
+  ibm_vsi1_user_data       = replace(local.shared_app_user_data, "REMOTE_IP", ibm_is_instance.vsi2.primary_network_interface.0.primary_ipv4_address)
   ibm_vsi1_security_groups = [ibm_is_security_group.sg1.id, ibm_is_security_group.install_software.id]
 }
 
 resource "ibm_is_subnet" "subnet1" {
   name                     = "${var.basename}-subnet1"
-  resource_group            = local.resource_group
+  resource_group           = local.resource_group
   vpc                      = ibm_is_vpc.vpc.id
   zone                     = var.ibm_zones[0]
   total_ipv4_address_count = 256
-  tags = local.tags
+  tags                     = local.tags
 }
 
 resource "ibm_is_instance" "vsi1" {
-  name    = "${var.basename}-vsi1"
-  resource_group            = local.resource_group
-  vpc     = ibm_is_vpc.vpc.id
-  zone    = var.ibm_zones[0]
-  keys    = [data.ibm_is_ssh_key.ssh_key.id]
-  image   = data.ibm_is_image.ubuntu.id
-  profile = var.profile
+  name           = "${var.basename}-vsi1"
+  resource_group = local.resource_group
+  vpc            = ibm_is_vpc.vpc.id
+  zone           = var.ibm_zones[0]
+  keys           = [data.ibm_is_ssh_key.ssh_key.id]
+  image          = data.ibm_is_image.ubuntu.id
+  profile        = var.profile
 
   primary_network_interface {
-    subnet = ibm_is_subnet.subnet1.id
+    subnet          = ibm_is_subnet.subnet1.id
     security_groups = local.ibm_vsi1_security_groups
   }
 
   user_data = local.ibm_vsi1_user_data
-  tags = local.tags
+  tags      = local.tags
 }
 
 resource "ibm_is_floating_ip" "vsi1" {
-  name   = "${var.basename}-vsi1"
-  resource_group            = local.resource_group
-  target = ibm_is_instance.vsi1.primary_network_interface[0].id
-  tags = local.tags
+  name           = "${var.basename}-vsi1"
+  resource_group = local.resource_group
+  target         = ibm_is_instance.vsi1.primary_network_interface[0].id
+  tags           = local.tags
 }
 
 output "BASENAME" {
@@ -106,7 +106,7 @@ output "ibm1_private_ip" {
   value = ibm_is_instance.vsi1.primary_network_interface[0].primary_ipv4_address
 }
 
-output ibm1_curl {
+output "ibm1_curl" {
   value = <<EOS
 curl ${ibm_is_floating_ip.vsi1.address}:3000; # get hello world string
 curl ${ibm_is_floating_ip.vsi1.address}:3000/info; # get the private IP address

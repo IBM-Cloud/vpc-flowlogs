@@ -1,8 +1,8 @@
-variable ibmcloud_api_key { }
-variable resource_group_name { }
-variable "basename" { }
-variable "ssh_key_name" { }
-variable "region" { }
+variable "ibmcloud_api_key" {}
+variable "resource_group_name" {}
+variable "basename" {}
+variable "ssh_key_name" {}
+variable "region" {}
 
 variable "ibm_zones" {
   default = [

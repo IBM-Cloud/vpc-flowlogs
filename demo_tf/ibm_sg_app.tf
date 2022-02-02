@@ -1,9 +1,9 @@
 # SG to install software from IBM cloud mirrors private access to https, http and DNS access is required
 resource "ibm_is_security_group" "install_software" {
-  name = "${var.basename}-install-software"
-  resource_group            = local.resource_group
-  vpc  = ibm_is_vpc.vpc.id
-  tags = local.tags
+  name           = "${var.basename}-install-software"
+  resource_group = local.resource_group
+  vpc            = ibm_is_vpc.vpc.id
+  tags           = local.tags
 }
 
 resource "ibm_is_security_group_rule" "egress_443_all" {

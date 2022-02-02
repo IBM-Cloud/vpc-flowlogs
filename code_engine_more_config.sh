@@ -1,4 +1,4 @@
-export DOCKER_IMAGE=ibmcom/sample-flowlog-logdna:latest
+export DOCKER_IMAGE=icr.io/solution-tutorials/sample-flowlog-logdna:latest
 
 # Contstants that are not required to configure, see comments
 CE_REGION=$LOGDNA_REGION

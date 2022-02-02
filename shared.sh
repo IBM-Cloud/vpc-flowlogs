@@ -2,25 +2,13 @@
 
 # Shared functions
 
-function get_workspace_id() {
-  # get the workspace id by name
-  ibmcloud schematics workspace list --json | jq -e -r '.workspaces[]|select(.name=="'$TF_VAR_basename'")|.id' 2>/dev/null
+cos_global_variables(){
+  COS_CRN=$(echo $COS_BUCKET_CRN | sed 's/\(.*\):[^:]*:[^:]*:[^:]*/\1/')::
+  COS_GUID=$(echo $COS_BUCKET_CRN | sed 's/.*:\([^:]*\):[^:]*:[^:]*/\1/')
+  bucket=$(echo $COS_BUCKET_CRN | sed 's/.*:[^:]*:\([^:]*\):[^:]*/\1/')
+  COS_BUCKET=$(echo $COS_BUCKET_CRN | sed 's/.*:[^:]*:[^:]*:\([^:]*\)/\1/')
+  if [ x$bucket != xbucket ]; then
+    echo "*** error parsing the COS_BUCKET_CRN:$COS_BUCKET_CRN"
+    exit 1
+  fi
 }
-
-function poll_for_latest_action_to_finish() {
-  # schematics activities do not complete synchronously, poll waiting for completion
-  local wsid=$1
-  while true; do
-    status=$(ibmcloud schematics workspace action --id $wsid --json | jq -r '.actions[0].status')
-    if [ "$status" == COMPLETED ]; then
-      return 0
-    fi
-    if [ "$status" == FAILED ]; then
-      return 1
-    fi
-    sleep 5
-  done
-}
-
-
-

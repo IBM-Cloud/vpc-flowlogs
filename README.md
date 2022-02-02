@@ -33,8 +33,15 @@ source demo.env
 cat code_engine_config.sh
 ```
 
-## Configure your existing VPC, COS bucket and Logging
-If you already have a vpc make make sure that it has been configured with flowlogs and you know the details of the bucket containing the flowlogs, and a Logging service instance and ingestion key.
+## Configure your existing VPC
+If you already have a vpc you have a couple of options
+
+### Option 1 - Add to my existing VPC via terraform configuration
+If your vpc was created with terraform add the terraform module as described in [README.md](modules/flowlog_ce_config/README.md)
+
+### Option 2 - Create your own COS bucket and Logging instance
+
+make make sure that it has been configured with flowlogs and you know the details of the bucket containing the flowlogs, and a Logging service instance and ingestion key.
 
 To find the bucket navigate to the [Resources view](https://cloud.ibm.com/resources) and in the **Storage** section open your Cloud Object Storage instance.  Open the **Bucket** and then open the **Configuration** and find the **Direct** endpoint and the **Bucket instance CRN**
 
@@ -50,6 +57,8 @@ edit code_engine_config.sh
 The file **code_engine_more_config.sh** has a few more configuration variables that typically do not require edits.  Open the file in an editor and verify.
 
 ## Create code engine related resources
+The script 150-ce-prerequisites.sh will verify that some of the configuration has been successfully completed (it could use some more work)
+
 The script 200-create-ce-project-logging-and-keys.sh will create resources as shown in the diagram above:
 - IAM service ID allowing access to COS and associated apikey
 - code engine project

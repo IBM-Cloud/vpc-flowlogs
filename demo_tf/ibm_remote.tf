@@ -3,18 +3,18 @@
 
 resource "ibm_is_subnet" "subnet2" {
   name                     = "${var.basename}-subnet2"
-  resource_group            = local.resource_group
+  resource_group           = local.resource_group
   vpc                      = ibm_is_vpc.vpc.id
   zone                     = var.ibm_zones[1]
   total_ipv4_address_count = 256
-  tags = local.tags
+  tags                     = local.tags
 }
 
 resource "ibm_is_security_group" "sg2" {
-  name = "${var.basename}-sg2"
-  resource_group            = local.resource_group
-  vpc  = ibm_is_vpc.vpc.id
-  tags = local.tags
+  name           = "${var.basename}-sg2"
+  resource_group = local.resource_group
+  vpc            = ibm_is_vpc.vpc.id
+  tags           = local.tags
 }
 
 resource "ibm_is_security_group_rule" "sg2_ingress_all" {
@@ -39,20 +39,20 @@ resource "ibm_is_security_group_rule" "sg1_egress_app_all" {
 }
 
 resource "ibm_is_instance" "vsi2" {
-  name    = "${var.basename}-vsi2"
-  resource_group            = local.resource_group
-  vpc     = ibm_is_vpc.vpc.id
-  zone    = var.ibm_zones[1]
-  keys    = [data.ibm_is_ssh_key.ssh_key.id]
-  image   = data.ibm_is_image.ubuntu.id
-  profile = var.profile
+  name           = "${var.basename}-vsi2"
+  resource_group = local.resource_group
+  vpc            = ibm_is_vpc.vpc.id
+  zone           = var.ibm_zones[1]
+  keys           = [data.ibm_is_ssh_key.ssh_key.id]
+  image          = data.ibm_is_image.ubuntu.id
+  profile        = var.profile
 
   primary_network_interface {
     subnet          = ibm_is_subnet.subnet2.id
     security_groups = [ibm_is_security_group.sg2.id, ibm_is_security_group.install_software.id]
   }
   user_data = local.shared_app_user_data
-  tags = local.tags
+  tags      = local.tags
 }
 
 output "ibm2_private_ip" {

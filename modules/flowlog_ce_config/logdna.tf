@@ -1,23 +1,14 @@
 resource "ibm_resource_instance" "logdna" {
   name              = "${local.name}-logdna"
-  service   = "logdna"
+  service           = "logdna"
   plan              = "7-day"
-  location = var.region
-  resource_group_id = local.resource_group
-  tags              = local.tags
+  location          = var.region
+  resource_group_id = var.resource_group
+  tags              = var.tags
 }
 
 resource "ibm_resource_key" "logdna" {
-  name = local.name
-  role = "Manager"
+  name                 = local.name
+  role                 = "Manager"
   resource_instance_id = ibm_resource_instance.logdna.id
-}
-
-output LOGDNA_REGION {
-  value = var.region
-}
-
-output LOGDNA_INGESTION_KEY {
-  sensitive = true
-  value = ibm_resource_key.logdna.credentials.ingestion_key
 }
