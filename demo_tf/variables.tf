@@ -11,9 +11,10 @@ variable "ibm_zones" {
     "us-south-3",
   ]
 }
-variable "ubuntu1804" {
-  default = "ibm-ubuntu-18-04-1-minimal-amd64-2"
+variable "image_os" {
+  default = "ubuntu-22-04-amd64"
 }
+
 variable "profile" {
   default = "cx2-2x4"
 }

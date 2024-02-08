@@ -44,7 +44,7 @@ resource "ibm_is_instance" "vsi2" {
   vpc            = ibm_is_vpc.vpc.id
   zone           = var.ibm_zones[1]
   keys           = [data.ibm_is_ssh_key.ssh_key.id]
-  image          = data.ibm_is_image.ubuntu.id
+  image          = local.image_id
   profile        = var.profile
 
   primary_network_interface {

@@ -20,8 +20,14 @@ data "ibm_is_ssh_key" "ssh_key" {
   name = var.ssh_key_name
 }
 
-data "ibm_is_image" "ubuntu" {
-  name = var.ubuntu1804
+data "ibm_is_images" "all_images" {
+  visibility = "public"
+  status     = "available"
+}
+
+locals {
+  image    = [for image in data.ibm_is_images.all_images.images : image if image.os == var.image_os]
+  image_id = local.image[0].id
 }
 
 ## Resources
@@ -68,7 +74,7 @@ resource "ibm_is_instance" "vsi1" {
   vpc            = ibm_is_vpc.vpc.id
   zone           = var.ibm_zones[0]
   keys           = [data.ibm_is_ssh_key.ssh_key.id]
-  image          = data.ibm_is_image.ubuntu.id
+  image          = local.image_id
   profile        = var.profile
 
   primary_network_interface {
