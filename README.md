@@ -1,3 +1,14 @@
+# Archived *** redesign required ***
+This repository has been archived due to its poor design:
+- Code engine jobs are limited to 100 jobs / 10 minutes. Flow logs can easily surpass this. Job frequency documentation:
+  - [Subscriptions for jobs and job run limitations](https://cloud.ibm.com/docs/codeengine?topic=codeengine-subscribing-events#subscribing-events-jobrun-limits)
+  - [Running jobs in parallel](https://cloud.ibm.com/docs/codeengine?topic=codeengine-job-run-parallel)
+- IBM Log Analysis has been deprecated and replaced with [IBM Cloud Logs](https://cloud.ibm.com/docs/cloud-logs?topic=cloud-logs-getting-started).
+
+Recommendation to update this example, choose one:
+- Integrate the COS buckets with Analytics Engine. Similar to this [blog post](https://www.ibm.com/blog/use-ibm-cloud-sql-query-to-analyze-vpc-network-traffic-from-ibm-cloud-flow-logs-for-vpc/) only using analytics engine instead of SQL Query/.
+- Use code engine application instead of a job with [IBM Cloud Logs](https://cloud.ibm.com/docs/cloud-logs?topic=cloud-logs-getting-started).
+
 # Analyze VPC Flow Logs
 This repository is the companion to the blog post [Use IBM Code Engine to push IBM VPC Flow Logs to IBM Log Analysis for analysis](https://www.ibm.com/cloud/blog/use-ibm-code-engine-to-push-ibm-vpc-flow-logs-to-ibm-log-analysis)
 

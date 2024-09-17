@@ -20,7 +20,7 @@ resource "ibm_iam_authorization_policy" "is_flowlog_write_to_cos" {
 }
 
 resource "ibm_cos_bucket" "flowlog" {
-  bucket_name          = "${local.name}-cefl-002"
+  bucket_name          = "${local.name}-cefl-003"
   resource_instance_id = ibm_resource_instance.cos.id
   region_location      = var.region
   #storage_class        = "flex"
